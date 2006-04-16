@@ -1,4 +1,3 @@
-
 ------------------------------------------------------------------------------
 -- |
 --  Module	: Pcap
@@ -117,12 +116,12 @@ import Foreign.Storable ( Storable(..) )
 import Network.Socket ( Family(..), unpackFamily)
 import System.IO.Error ( userError )
 
-
 #include <pcap.h>
-#include <net/bpf.h>
+#include <pcap-bpf.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+#include "config.h"
 
 
 data BpfProgramTag
@@ -459,7 +458,11 @@ oneAddr abuf =
 		socka sa =
 			if sa /= nullPtr then
 				do
-					l <- ((#peek struct sockaddr, sa_len) sa)    :: IO CUChar
+#if defined(SA_LEN)
+                                        l <- ((#peek struct sockaddr, sa_len) sa) :: IO CUChar
+#else
+                                        l <- return (#size struct sockaddr) :: IO CUChar
+#endif
 					f <- ((#peek struct sockaddr, sa_family) sa) :: IO CUChar
 					
 					addr <- peekArray ((fromIntegral l) - (#offset struct sockaddr, sa_data))
@@ -1096,5 +1099,3 @@ unpackLink l = case l of
 #ifdef DLT_AIRONET_HEADER
 	(#const DLT_AIRONET_HEADER) -> DLT_AIRONET_HEADER
 #endif
-
-
