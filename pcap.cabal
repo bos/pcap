@@ -4,7 +4,8 @@ license:         BSD4
 license-file:    LICENSE
 synopsis:        pcap interface
 description:     FFI Wrapper around libpcap
-maintainer:      nickburlett@mac.com, dominic.steinitz@blueyonder.co.uk
+maintainer:      Bryan O'Sullivan <bos@serpentine.com>
+author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
 category:        Network
 exposed-modules: Network.Pcap
 build-depends:   base, network, haskell98
