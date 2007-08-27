@@ -3,8 +3,7 @@
 -- |
 --  Module	: Network.Pcap.Base
 --  Copyright	: Bryan O'Sullivan 2007, Antiope Associates LLC 2004
---  License	: BSD-style (see the file libraries/network/license)
---
+--  License	: BSD-style
 --  Maintainer	: bos@serpentine.com
 --  Stability	: experimental
 --  Portability	: non-portable

@@ -8,11 +8,12 @@ maintainer:      Bryan O'Sullivan <bos@serpentine.com>
 author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
 category:        Network
 exposed-modules: Network.Pcap.Base
+                 Network.Pcap
 build-depends:   base, haskell98, network, time
 extensions:      ForeignFunctionInterface
 ghc-options:     -W
 include-dirs:    include
-includes:        pcapconfig.h
+includes:        pcapconfig.h pcap.h
 extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
                  pcap.buildinfo.in
