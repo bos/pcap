@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
 ------------------------------------------------------------------------------
 -- |
 --  Module	: Network.Pcap.Base
@@ -124,15 +125,15 @@ import System.IO.Error ( userError )
 #include "pcapconfig.h"
 
 
-data BpfProgramTag
+newtype BpfProgramTag = BpfProgramTag ()
 -- | Compiled Berkeley Packet Filter program
 type BpfProgram = ForeignPtr BpfProgramTag
 
-data PcapTag
+newtype PcapTag = PcapTag ()
 -- | packet capture descriptor
 type Pcap  = ForeignPtr PcapTag
 
-data PcapDumpTag
+newtype PcapDumpTag = PcapDumpTag ()
 -- | savefile descriptor
 type Pdump = ForeignPtr PcapDumpTag
 
@@ -374,8 +375,8 @@ foreign import ccall "wrapper" h2c''
 -- Find devices
 --
 
-data DevBuf
-data DevAddr
+newtype DevBuf = DefBuf ()
+newtype DevAddr = DevAddr ()
 
 
 -- |

@@ -10,7 +10,7 @@ category:        Network
 exposed-modules: Network.Pcap.Base
 build-depends:   base, haskell98, network, time
 extensions:      ForeignFunctionInterface
-ghc-options:     -fglasgow-exts
+ghc-options:     -W
 include-dirs:    include
 includes:        pcapconfig.h
 extra-source-files:
