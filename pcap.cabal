@@ -2,8 +2,8 @@ name:            pcap
 version:         0.2
 license:         BSD4
 license-file:    LICENSE
-synopsis:        pcap interface
-description:     FFI Wrapper around libpcap
+synopsis:        A system-independent interface for user-level packet capture
+description:     A system-independent interface for user-level packet capture
 maintainer:      Bryan O'Sullivan <bos@serpentine.com>
 author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
 category:        Network
