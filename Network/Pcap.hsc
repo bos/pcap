@@ -4,7 +4,7 @@
 --  Copyright	: (c) Antiope Associates LLC 2004
 --  License	: BSD-style (see the file libraries/network/license)
 --
---  Maintainer	: 
+--  Maintainer	: nickburlett@mac.com, dominic.steinitz@blueyonder.co.uk 
 --  Stability	: experimental
 --  Portability	: non-portable
 --
@@ -46,7 +46,6 @@
 --  for Windows, although adapting it should not prove difficult.
 --
 ------------------------------------------------------------------------------
-
 
 
 module Network.Pcap (
