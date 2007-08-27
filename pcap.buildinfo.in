@@ -1,0 +1,3 @@
+ghc-options: -DCALLCONV=@CALLCONV@
+cc-options: -DCALLCONV=@CALLCONV@
+extra-libraries: @EXTRA_LIBS@

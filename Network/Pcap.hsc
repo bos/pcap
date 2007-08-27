@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 ------------------------------------------------------------------------------
 -- |
 --  Module	: Network.Pcap
@@ -507,10 +508,10 @@ lookupNet dev =
 							(fromIntegral mask) )
 
 
-foreign import ccall unsafe pcap_lookupdev   :: Ptr CChar        -> IO (Ptr CChar)
-foreign import ccall unsafe pcap_findalldevs :: Ptr (Ptr DevBuf) -> Ptr CChar -> IO CInt
-foreign import ccall unsafe pcap_freealldevs :: Ptr DevBuf       -> IO ()
-foreign import ccall unsafe pcap_lookupnet   :: Ptr CChar        -> Ptr CUInt -> Ptr CUInt -> Ptr CChar -> IO CInt
+foreign import CALLCONV unsafe pcap_lookupdev   :: Ptr CChar        -> IO (Ptr CChar)
+foreign import CALLCONV unsafe pcap_findalldevs :: Ptr (Ptr DevBuf) -> Ptr CChar -> IO CInt
+foreign import CALLCONV unsafe pcap_freealldevs :: Ptr DevBuf       -> IO ()
+foreign import CALLCONV unsafe pcap_lookupnet   :: Ptr CChar        -> Ptr CUInt -> Ptr CUInt -> Ptr CChar -> IO CInt
 
 
 
@@ -544,8 +545,8 @@ getNonBlock ptr =
                         else return (toBool ret)
 
 
-foreign import ccall unsafe pcap_setnonblock :: Ptr PcapTag -> CInt -> Ptr CChar -> IO CInt
-foreign import ccall unsafe pcap_getnonblock :: Ptr PcapTag -> Ptr CChar -> IO CInt
+foreign import CALLCONV unsafe pcap_setnonblock :: Ptr PcapTag -> CInt -> Ptr CChar -> IO CInt
+foreign import CALLCONV unsafe pcap_getnonblock :: Ptr PcapTag -> Ptr CChar -> IO CInt
 
 
 
@@ -559,7 +560,7 @@ throwPcapError hdl = do
         ioError (userError msg)
 
 
-foreign import ccall unsafe pcap_geterr :: Ptr PcapTag -> IO (Ptr CChar)
+foreign import CALLCONV unsafe pcap_geterr :: Ptr PcapTag -> IO (Ptr CChar)
 
 
 
@@ -685,16 +686,16 @@ dump hdl hdr pkt = pcap_dump hdl hdr pkt
 
 
 
-foreign import ccall "wrapper" exportCCallback
+foreign import CALLCONV "wrapper" exportCCallback
         :: CCallback -> IO (FunPtr CCallback)
 
-foreign import ccall pcap_dispatch
+foreign import CALLCONV pcap_dispatch
         :: Ptr PcapTag -> CInt -> FunPtr CCallback -> Ptr Word8 -> IO CInt
-foreign import ccall pcap_loop
+foreign import CALLCONV pcap_loop
         :: Ptr PcapTag -> CInt -> FunPtr CCallback -> Ptr Word8 -> IO CInt
-foreign import ccall pcap_next
+foreign import CALLCONV pcap_next
         :: Ptr PcapTag -> Ptr PktHdr -> IO (Ptr Word8)
-foreign import ccall pcap_dump
+foreign import CALLCONV pcap_dump
 	:: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
 
 
@@ -740,9 +741,9 @@ listDatalinks hdl =
 			return (map unpackLink dls)
 	
 		
-foreign import ccall unsafe pcap_datalink       :: Ptr PcapTag -> IO CInt
-foreign import ccall unsafe pcap_set_datalink   :: Ptr PcapTag -> CInt -> IO CInt
-foreign import ccall unsafe pcap_list_datalinks :: Ptr PcapTag -> Ptr (Ptr CInt) -> IO CInt
+foreign import CALLCONV unsafe pcap_datalink       :: Ptr PcapTag -> IO CInt
+foreign import CALLCONV unsafe pcap_set_datalink   :: Ptr PcapTag -> CInt -> IO CInt
+foreign import CALLCONV unsafe pcap_list_datalinks :: Ptr PcapTag -> Ptr (Ptr CInt) -> IO CInt
 
 
 --
@@ -772,7 +773,7 @@ statistics hdl =
 				(fromIntegral (drop   :: CUInt))
 				(fromIntegral (ifdrop :: CUInt)))
 
-foreign import ccall unsafe pcap_stats :: Ptr PcapTag -> Ptr PcapStats -> IO Int
+foreign import CALLCONV unsafe pcap_stats :: Ptr PcapTag -> Ptr PcapStats -> IO Int
 
 
 
@@ -817,10 +818,10 @@ snapshotLen ptr = do
 	return (fromIntegral (l :: CInt))
 
 
-foreign import ccall pcap_major_version :: Ptr PcapTag -> IO CInt
-foreign import ccall pcap_minor_version :: Ptr PcapTag -> IO CInt
-foreign import ccall pcap_is_swapped    :: Ptr PcapTag -> IO CInt
-foreign import ccall pcap_snapshot      :: Ptr PcapTag -> IO CInt
+foreign import CALLCONV pcap_major_version :: Ptr PcapTag -> IO CInt
+foreign import CALLCONV pcap_minor_version :: Ptr PcapTag -> IO CInt
+foreign import CALLCONV pcap_is_swapped    :: Ptr PcapTag -> IO CInt
+foreign import CALLCONV pcap_snapshot      :: Ptr PcapTag -> IO CInt
 
 
 --
