@@ -11,7 +11,7 @@ exposed-modules: Network.Pcap.Base
                  Network.Pcap
 build-depends:   base, haskell98, network, time
 extensions:      ForeignFunctionInterface
-ghc-options:     -W
+ghc-options:     -W -O -funbox-strict-fields
 include-dirs:    include
 includes:        pcapconfig.h pcap.h
 extra-source-files:
