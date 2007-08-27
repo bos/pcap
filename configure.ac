@@ -1,4 +1,4 @@
-AC_INIT([Pcap],[0.2],[dominic.steinitz@blueyonder.co.uk], [pcap])
+AC_INIT([Pcap],[0.3],[bos@serpentine.com], [pcap])
 
 AC_CONFIG_HEADER(include/pcapconfig.h)
 
