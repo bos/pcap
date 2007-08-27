@@ -56,6 +56,7 @@ module Network.Pcap.Base
     , BpfProgram
     , BpfProgramTag
     , Callback
+    , Direction(..)
     , Link(..)
     , Interface(..)
     , PcapAddr(..)
@@ -80,11 +81,12 @@ module Network.Pcap.Base
     , lookupNet                 -- :: String -> IO Network
 
     -- * Interface control
-    -- ** Blocking mode
+
     , setNonBlock		-- :: Ptr PcapTag -> Bool -> IO ()
     , getNonBlock		-- :: Ptr PcapTag -> IO Bool
+    , setDirection
 
-    -- ** Link layer utilities
+    -- * Link layer utilities
     , datalink                  -- :: Ptr PcapTag -> IO Link
     , setDatalink		-- :: Ptr PcapTag -> Link -> IO ()
     , listDatalinks		-- :: Ptr PcapTag -> IO [Link]
@@ -94,6 +96,9 @@ module Network.Pcap.Base
     , loop			-- :: Ptr PcapTag -> Int -> Callback -> IO Int
     , next			-- :: Ptr PcapTag -> IO (PktHdr, Ptr Word8)
     , dump			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
+
+    -- * Sending packets
+    , sendPacket
 
     -- * Conversion
     , toPktHdr
@@ -484,10 +489,32 @@ setNonBlock hdl block = do
 getNonBlock :: Ptr PcapTag -> IO Bool
 getNonBlock hdl = toBool `fmap` withErrBuf (== -1) (pcap_getnonblock hdl)
 
+-- | The direction in which packets are to be captured.  See
+-- 'setDirection'.
+data Direction = InOut          -- ^ incoming and outgoing packets (the default
+               | In             -- ^ incoming packets
+               | Out            -- ^ outgoing packets
+                 deriving (Eq, Show, Read)
+
+-- | Specify the direction in which packets are to be captured.
+-- Complete functionality is not necessarily available on all
+-- platforms.
+setDirection :: Ptr PcapTag -> Direction -> IO ()
+setDirection hdl dir = do
+    pcap_setdirection hdl (packDirection dir) >>= throwPcapIf hdl (== -1)
+    return ()
+
+packDirection :: Direction -> CInt
+packDirection In = (#const PCAP_D_IN)
+packDirection Out = (#const PCAP_D_OUT)
+packDirection InOut = (#const PCAP_D_INOUT)
+
 foreign import ccall unsafe pcap_setnonblock
     :: Ptr PcapTag -> CInt -> ErrBuf -> IO CInt
 foreign import ccall unsafe pcap_getnonblock
     :: Ptr PcapTag -> ErrBuf -> IO CInt
+foreign import ccall unsafe pcap_setdirection
+    :: Ptr PcapTag -> CInt -> IO CInt
 
 --
 -- Error handling
@@ -501,9 +528,17 @@ throwPcapIf hdl p v = if p v
 foreign import ccall unsafe pcap_geterr
     :: Ptr PcapTag -> IO CString
 
---
--- Reading packets
---
+-- | Send a raw packet through the network interface.
+sendPacket :: Ptr PcapTag
+           -> Ptr Word8         -- ^ packet data (including link-level header)
+           -> Int               -- ^ packet size
+           -> IO ()
+sendPacket hdl buf size = do
+    pcap_sendpacket hdl buf (fromIntegral size) >>= throwPcapIf hdl (== -1)
+    return ()
+
+foreign import ccall unsafe pcap_sendpacket
+    :: Ptr PcapTag -> Ptr Word8 -> CInt -> IO CInt
 
 -- | the type of the callback function passed to 'dispatch' or 'loop'.
 type Callback  = PktHdr    -> Ptr Word8  -> IO ()

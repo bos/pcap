@@ -36,6 +36,7 @@ module Network.Pcap
     , DumpHandle
     , BpfProgram
     , Callback
+    , Direction(..)
     , Link(..)
     , Interface(..)
     , PcapAddr(..)
@@ -60,11 +61,12 @@ module Network.Pcap
     , lookupNet                 -- :: String -> IO Network
 
     -- * Interface control
-    -- ** Blocking mode
+
     , setNonBlock		-- :: PcapHandle -> Bool -> IO ()
     , getNonBlock		-- :: PcapHandle -> IO Bool
+    , setDirection
 
-    -- ** Link layer utilities
+    -- * Link layer utilities
     , datalink                  -- :: PcapHandle -> IO Link
     , setDatalink		-- :: PcapHandle -> Link -> IO ()
     , listDatalinks		-- :: PcapHandle -> IO [Link]
@@ -74,6 +76,9 @@ module Network.Pcap
     , loop			-- :: PcapHandle -> Int -> Callback -> IO Int
     , next			-- :: PcapHandle -> IO (PktHdr, Ptr Word8)
     , dump			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
+
+    -- * Sending packets
+    , sendPacket
 
     -- * Conversion
     , toBS
@@ -95,7 +100,7 @@ import Foreign.Ptr ( Ptr )
 import Foreign.ForeignPtr (ForeignPtr, withForeignPtr)
 import qualified Network.Pcap.Base as P
 import Network.Pcap.Base (BpfProgram, Callback, Interface(..), Link(..),
-                          Network(..),
+                          Network(..), Direction(..),
                           PcapAddr(..), PktHdr(..), SockAddr(..), Statistics,
                           compileFilter, findAllDevs, lookupDev, lookupNet)
 
@@ -208,6 +213,12 @@ setNonBlock pch block = withPcap pch $ \hdl -> P.setNonBlock hdl block
 getNonBlock :: PcapHandle -> IO Bool
 getNonBlock pch = withPcap pch P.getNonBlock
 
+-- | Specify the direction in which packets are to be captured.
+-- Complete functionality is not necessarily available on all
+-- platforms.
+setDirection :: PcapHandle -> Direction -> IO ()
+setDirection pch dir = withPcap pch $ \hdl -> P.setDirection hdl dir
+
 {-# INLINE hdrTime #-}
 -- | Get the timestamp of a packet as a single quantity, in microseconds.
 hdrTime :: PktHdr -> Int64
@@ -253,6 +264,13 @@ loop :: PcapHandle
      -> IO Int	-- ^ number of packets read
 loop pch count f = withPcap pch $ \hdl -> P.loop hdl count f
 
+
+-- | Send a raw packet through the network interface.
+sendPacket :: PcapHandle
+           -> Ptr Word8         -- ^ packet data (including link-level header)
+           -> Int               -- ^ packet size
+           -> IO ()
+sendPacket pch buf size = withPcap pch $ \hdl -> P.sendPacket hdl buf size
 
 -- | Represent a captured packet as a 'B.ByteString'.  Suitable for
 -- use as is with the result of 'next', or use @'curry' 'toBS'@ inside
