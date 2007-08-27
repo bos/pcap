@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------
 -- |
---  Module	: Pcap
+--  Module	: Network.Pcap
 --  Copyright	: (c) Antiope Associates LLC 2004
 --  License	: BSD-style (see the file libraries/network/license)
 --
@@ -49,7 +49,7 @@
 
 
 
-module Pcap (
+module Network.Pcap (
 
 	-- * Types
 	Pcap,
@@ -121,7 +121,7 @@ import System.IO.Error ( userError )
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-#include "config.h"
+#include "pcapconfig.h"
 
 
 data BpfProgramTag
@@ -458,7 +458,7 @@ oneAddr abuf =
 		socka sa =
 			if sa /= nullPtr then
 				do
-#if defined(SA_LEN)
+#if defined(HAVE_STRUCT_SOCKADDR_SA_LEN)
                                         l <- ((#peek struct sockaddr, sa_len) sa) :: IO CUChar
 #else
                                         l <- return (#size struct sockaddr) :: IO CUChar
