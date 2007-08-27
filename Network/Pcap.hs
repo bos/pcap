@@ -79,6 +79,7 @@ module Network.Pcap
 
     -- * Sending packets
     , sendPacket
+    , sendPacketBS
 
     -- * Conversion
     , toBS
@@ -96,7 +97,7 @@ import qualified Data.ByteString.Base as B
 import Data.Int (Int64)
 import Data.Time.Clock (DiffTime, picosecondsToDiffTime)
 import Data.Word ( Word8, Word32 )
-import Foreign.Ptr ( Ptr )
+import Foreign.Ptr (Ptr, castPtr)
 import Foreign.ForeignPtr (ForeignPtr, withForeignPtr)
 import qualified Network.Pcap.Base as P
 import Network.Pcap.Base (BpfProgram, Callback, Interface(..), Link(..),
@@ -271,6 +272,13 @@ sendPacket :: PcapHandle
            -> Int               -- ^ packet size
            -> IO ()
 sendPacket pch buf size = withPcap pch $ \hdl -> P.sendPacket hdl buf size
+
+-- | Send a raw packet through the network interface.
+sendPacketBS :: PcapHandle
+             -> B.ByteString    -- ^ packet data (including link-level header)
+             -> IO ()
+sendPacketBS pch s = B.unsafeUseAsCStringLen s $ \(buf, len) ->
+    sendPacket pch (castPtr buf) len
 
 -- | Represent a captured packet as a 'B.ByteString'.  Suitable for
 -- use as is with the result of 'next', or use @'curry' 'toBS'@ inside
