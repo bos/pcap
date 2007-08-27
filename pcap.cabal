@@ -9,7 +9,7 @@ author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wrigh
 category:        Network
 exposed-modules: Network.Pcap.Base
                  Network.Pcap
-build-depends:   base, haskell98, network, time
+build-depends:   base >= 2.0, haskell98, network, time
 extensions:      ForeignFunctionInterface
 ghc-options:     -W -O -funbox-strict-fields
 include-dirs:    include
