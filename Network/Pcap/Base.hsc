@@ -12,7 +12,8 @@
 -- functions in @libpcap@.  See <http://www.tcpdump.org> for more
 -- information.
 -- 
--- Only a minimum of marshaling is done.
+-- Only a minimum of marshaling is done.  For a higher-level interface
+-- that\'s more friendly, use the 'Network.Pcap' module.
 -- 
 -- To convert captured packet data to a list, extract the length of
 -- the captured buffer from the packet header record and use
@@ -111,20 +112,20 @@ module Network.Pcap.Base
     ) where
 
 import Control.Monad (when)
-import Data.Maybe (isNothing, fromJust  )
+import Data.Maybe (isNothing, fromJust )
 import Data.ByteString ()
 import qualified Data.ByteString.Base as B
-import Data.Word ( Word8, Word32 )
-import Foreign.Ptr ( Ptr, plusPtr, nullPtr, FunPtr, freeHaskellFunPtr )
-import Foreign.C.String ( CString, peekCString, withCString )
-import Foreign.C.Types ( CInt, CUInt, CChar, CUChar, CLong )
+import Data.Word (Word8, Word32)
+import Foreign.Ptr (Ptr, plusPtr, nullPtr, FunPtr, freeHaskellFunPtr)
+import Foreign.C.String (CString, peekCString, withCString)
+import Foreign.C.Types (CInt, CUInt, CChar, CUChar, CLong)
 import Foreign.ForeignPtr (ForeignPtr, FinalizerPtr, newForeignPtr)
-import Foreign.Marshal.Alloc ( alloca, allocaBytes, free )
-import Foreign.Marshal.Array ( allocaArray, peekArray )
-import Foreign.Marshal.Utils ( fromBool, toBool )
-import Foreign.Storable ( Storable(..) )
-import Network.Socket ( Family(..), unpackFamily)
-import System.IO.Error ( userError )
+import Foreign.Marshal.Alloc (alloca, allocaBytes, free)
+import Foreign.Marshal.Array (allocaArray, peekArray)
+import Foreign.Marshal.Utils (fromBool, toBool)
+import Foreign.Storable (Storable(..))
+import Network.Socket (Family(..), unpackFamily)
+import System.IO.Error (userError)
 
 #include <pcap.h>
 #include <pcap-bpf.h>

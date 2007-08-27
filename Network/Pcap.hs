@@ -7,13 +7,18 @@
 --  Stability	: experimental
 --  Portability	: non-portable
 -- 
--- The 'Network.Pcap' module is a high-level binding to all of the
--- functions in @libpcap@, built on 'Network.Pcap.Base'.  See
--- <http://www.tcpdump.org> for more information.
+-- The 'Network.Pcap' module is a high(ish) level binding to all of
+-- the functions in @libpcap@.  See <http://www.tcpdump.org> for more
+-- information.
+--
+-- This module is built on the lower-level 'Network.Pcap.Base' module,
+-- which is slightly more efficient.  Don\'t use 'Network.Pcap.Base'
+-- unless profiling data indicates that you need to.
 -- 
--- Only a minimum of marshaling is done. To convert captured packet
--- data to a 'B.ByteString' (space efficient, and with /O(1)/ access
--- to every byte in a captured packet), use 'toBS'.
+-- Only a minimum of marshaling is done on received packets.  To
+-- convert captured packet data to a 'B.ByteString' (space efficient,
+-- and with /O(1)/ access to every byte in a captured packet), use
+-- 'toBS'.
 -- 
 -- Note that the 'SockAddr' exported here is not the @SockAddr@ from
 -- 'Network.Socket'. The @SockAddr@ from 'Network.Socket' corresponds
@@ -96,7 +101,7 @@ module Network.Pcap
 import qualified Data.ByteString.Base as B
 import Data.Int (Int64)
 import Data.Time.Clock (DiffTime, picosecondsToDiffTime)
-import Data.Word ( Word8, Word32 )
+import Data.Word (Word8, Word32)
 import Foreign.Ptr (Ptr, castPtr)
 import Foreign.ForeignPtr (ForeignPtr, withForeignPtr)
 import qualified Network.Pcap.Base as P
