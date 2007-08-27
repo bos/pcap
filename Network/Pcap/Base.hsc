@@ -8,8 +8,9 @@
 --  Stability	: experimental
 --  Portability	: non-portable
 -- 
--- The 'Network.Pcap' module is a binding to all of the functions in
--- @libpcap@.  See <http://www.tcpdump.org> for more information.
+-- The 'Network.Pcap.Base' module is a low-level binding to all of the
+-- functions in @libpcap@.  See <http://www.tcpdump.org> for more
+-- information.
 -- 
 -- Only a minimum of marshaling is done.
 -- 
@@ -53,6 +54,7 @@ module Network.Pcap.Base
     , PcapDumpTag
     , Pdump
     , BpfProgram
+    , BpfProgramTag
     , Callback
     , Link(..)
     , Interface(..)
@@ -132,7 +134,7 @@ newtype PcapTag = PcapTag ()
 -- | packet capture descriptor
 
 newtype PcapDumpTag = PcapDumpTag ()
--- | save file descriptor
+-- | dump file descriptor
 type Pdump = ForeignPtr PcapDumpTag
 
 data PktHdr = PktHdr {
@@ -144,8 +146,8 @@ data PktHdr = PktHdr {
 
 data Statistics = Statistics {
       statReceived :: {-# UNPACK #-} !Word32	-- ^ packets received
-    , statDropped :: {-# UNPACK #-} !Word32	-- ^ packets dropped by libpcap
-    , statIfaceDropped :: {-# UNPACK #-} !Word32 -- ^ packets dropped by the interface
+    , statDropped :: {-# UNPACK #-} !Word32	-- ^ packets dropped by @libpcap@
+    , statIfaceDropped :: {-# UNPACK #-} !Word32 -- ^ packets dropped by the network interface
     } deriving (Eq, Show)
 
 type ErrBuf = Ptr CChar
@@ -193,9 +195,9 @@ withErrBuf isError f = allocaArray (#const PCAP_ERRBUF_SIZE) $ \errPtr -> do
       then peekCString errPtr >>= ioError . userError
       else return ret
 
--- | 'openOffline' opens a \"save file\" for reading. The file foramt
--- is the as used for @tcpdump@. The string \"-\" is a synonym for
--- @stdin@.
+-- | 'openOffline' opens a dump file for reading. The file format
+-- is the same as used by @tcpdump@ and Wireshark. The string @\"-\"@
+-- is a synonym for @stdin@.
 --
 openOffline :: FilePath	-- ^ filename
 	    -> IO (ForeignPtr PcapTag)
@@ -210,8 +212,8 @@ openOffline name =
 -- the snapshot legnth (in bytes), the promiscuity of the interface
 -- ('True' == promiscuous) and a timeout in milliseconds.
 -- 
--- Using \"any\" as the device name will capture packets from all
--- interfaces.  On some systems, reading from the \"any\" device is
+-- Using @\"any\"@ as the device name will capture packets from all
+-- interfaces.  On some systems, reading from the @\"any\"@ device is
 -- incompatible with setting the interfaces into promiscuous mode. In
 -- that case, only packets whose link layer addresses match those of
 -- the interfaces are captured.
@@ -261,12 +263,12 @@ foreign import ccall "wrapper" h2c
 -- Open a dump device
 --
 
--- | 'openDump' opens a \"save file\" for writing. This save file is
+-- | 'openDump' opens a dump file for writing. This dump file is
 -- written to by the 'dump' function. The arguments are a raw packet
 -- capture descriptor and the file name, with \"-\" as a synonym for
 -- @stdout@.
 openDump :: Ptr PcapTag	-- ^ packet capture descriptor
-	 -> FilePath	-- ^ save file name
+	 -> FilePath	-- ^ dump file name
 	 -> IO Pdump	-- ^ davefile descriptor
 openDump hdl name =
     withCString name $ \namePtr -> do
@@ -465,8 +467,8 @@ foreign import ccall unsafe pcap_lookupnet
 -- Set or read the device mode (blocking/nonblocking)
 --
 
--- | Set a packet capture descriptor into non-blocking mode, if the
--- second argument is True, otherwise put it in blocking mode. Note
+-- | Set a packet capture descriptor into non-blocking mode if the
+-- second argument is 'True', otherwise put it in blocking mode. Note
 -- that the packet capture descriptor must have been obtaine from
 -- 'openLive'.
 --
@@ -477,7 +479,7 @@ setNonBlock hdl block = do
 
 -- | Return the blocking status of the packet capture
 -- descriptor. 'True' indicates that the descriptor is
--- non-blocking. Descriptors referring to save files opened by
+-- non-blocking. Descriptors referring to dump files opened by
 -- 'openDump' always return 'False'.
 getNonBlock :: Ptr PcapTag -> IO Bool
 getNonBlock hdl = toBool `fmap` withErrBuf (== -1) (pcap_getnonblock hdl)
@@ -503,7 +505,7 @@ foreign import ccall unsafe pcap_geterr
 -- Reading packets
 --
 
--- | the type of the callback function passed to dispatch or loop.
+-- | the type of the callback function passed to 'dispatch' or 'loop'.
 type Callback  = PktHdr    -> Ptr Word8  -> IO ()
 type CCallback = Ptr Word8 -> Ptr PktHdr -> Ptr Word8 -> IO ()
 
@@ -534,7 +536,7 @@ exportCallback f = exportCCallback $ \_user chdr ptr -> do
 -- The count is the maximum number of packets to process before
 -- returning.  A count of -1 means process all of the packets received
 -- in one buffer (if a live capture) or all of the packets in a
--- save file (if offline).
+-- dump file (if offline).
 --
 -- The callback function is passed two arguments, a packet header
 -- record and a pointer to the packet data (@Ptr Word8@). THe header
@@ -559,7 +561,7 @@ dispatch hdl count f = do
 -- 
 -- This function does not return when a live read tiemout occurs. Use
 -- 'dispatch' instead if you wnat to specify a timeout.
-loop :: Ptr PcapTag	-- ^ packet cpature descriptor
+loop :: Ptr PcapTag	-- ^ packet capture descriptor
      -> Int		-- ^ number of packet to read
      -> Callback	-- ^ packet processing function
      -> IO Int	-- ^ number of packets read
@@ -585,9 +587,9 @@ next hdl =
           return (hdr, ptr)
 
 -- | Write the packet data given by the second and third arguments to
--- a save file opened by 'openDead'. 'dump' is designed so it can be
+-- a dump file opened by 'openDead'. 'dump' is designed so it can be
 -- easily used as a default callback function by 'dispatch' or 'loop'.
-dump :: Ptr PcapDumpTag	-- ^ save file descriptor
+dump :: Ptr PcapDumpTag	-- ^ dump file descriptor
      -> Ptr PktHdr		-- ^ packet header record
      -> Ptr Word8		-- ^ packet data
      -> IO ()
@@ -675,7 +677,7 @@ version hdl = do
   minor <- pcap_minor_version hdl
   return (fromIntegral major, fromIntegral minor)
 
--- | 'isSwapped' returns 'True' if the current save file uses a
+-- | 'isSwapped' returns 'True' if the current dump file uses a
 -- different byte order than the one native to the system.
 isSwapped :: Ptr PcapTag -> IO Bool
 isSwapped hdl = toBool `fmap`  pcap_is_swapped hdl

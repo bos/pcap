@@ -1,4 +1,3 @@
-{-# OPTIONS -keep-hc-file #-}
 ------------------------------------------------------------------------------
 -- |
 --  Module	: Network.Pcap
@@ -8,31 +7,13 @@
 --  Stability	: experimental
 --  Portability	: non-portable
 -- 
--- The 'Network.Pcap' module is a binding to all of the functions in
--- @libpcap@.  See <http://www.tcpdump.org> for more information.
+-- The 'Network.Pcap' module is a high-level binding to all of the
+-- functions in @libpcap@, built on 'Network.Pcap.Base'.  See
+-- <http://www.tcpdump.org> for more information.
 -- 
 -- Only a minimum of marshaling is done. To convert captured packet
 -- data to a 'B.ByteString' (space efficient, and with /O(1)/ access
 -- to every byte in a captured packet), use 'toBS'.
--- 
--- To convert captured packet data to a list, extract the length of
--- the captured buffer from the packet header record and use
--- 'peekArray' to convert the captured data to a list.  For
--- illustration:
---
--- >	import Network.Pcap
--- >	import Foreign.Marshal.Array (peekArray)
--- >
--- >	main = do
--- >        let printIt :: PktHdr -> Ptr Word8 -> IO ()
--- >		printIt ph bytep = do
--- >	          a <- peekArray (fromIntegral (caplen ph)) bytep 
--- >	       	  print a
--- >
--- >	    p <- openLive "em0" 100 True 10000
--- >	    s <- withForeignPtr p $ \ptr -> do
--- >	           dispatch ptr (-1) printIt
--- >	    return ()
 -- 
 -- Note that the 'SockAddr' exported here is not the @SockAddr@ from
 -- 'Network.Socket'. The @SockAddr@ from 'Network.Socket' corresponds
@@ -41,7 +22,7 @@
 -- volume 2, for further elucidation.
 -- 
 -- This binding should be portable across systems that can use the
--- @libpcap@ from @tcpdump.org@. It will not work with Winpcap, a
+-- @libpcap@ from @tcpdump.org@. It does not yet work with Winpcap, a
 -- similar library for Windows, although adapting it should not prove
 -- difficult.
 --
@@ -64,10 +45,10 @@ module Network.Pcap
     , Statistics(..)
 
     -- * Device opening
-    , openOffline		-- :: String -> IO Pcap
+    , openOffline		-- :: FilePath -> IO Pcap
     , openLive           -- :: String -> Int -> Bool -> Int -> IO Pcap
     , openDead                  -- :: Int    -> Int -> IO Pcap
-    , openDump                 -- :: PcapHandle -> String -> IO Pdump
+    , openDump                 -- :: PcapHandle -> FilePath -> IO Pdump
 
     -- * Filter handling
     , setFilter -- :: PcapHandle -> String -> Bool -> Word32 -> IO ()
@@ -96,7 +77,6 @@ module Network.Pcap
 
     -- * Conversion
     , toBS
-    , toPktHdr
     , hdrTime
     , hdrDiffTime
 
@@ -117,55 +97,61 @@ import qualified Network.Pcap.Base as P
 import Network.Pcap.Base (BpfProgram, Callback, Interface(..), Link(..),
                           Network(..),
                           PcapAddr(..), PktHdr(..), SockAddr(..), Statistics,
-                          compileFilter, findAllDevs, lookupDev, lookupNet,
-                          toPktHdr)
+                          compileFilter, findAllDevs, lookupDev, lookupNet)
 
 
--- | packet capture descriptor
+-- | packet capture handle
 newtype PcapHandle  = PcapHandle (ForeignPtr P.PcapTag)
 
--- | savefile descriptor
+-- | dump file handle
 newtype DumpHandle = DumpHandle (ForeignPtr P.PcapDumpTag)
 
 --
 -- Open a device
 --
 
--- | 'openOffline' opens a \"savefile\" for reading. The file foramt
--- is the as used for @tcpdump@. The string \"-\" is a synonym for
--- @stdin@.
+-- | 'openOffline' opens a dump file for reading. The file format
+-- is the same as used by @tcpdump@ and Wireshark. The string @\"-\"@
+-- is a synonym for @stdin@.
 --
-openOffline :: String	-- ^ filename
+openOffline :: FilePath	-- ^ name of dump file to read
 	    -> IO PcapHandle
 openOffline = fmap PcapHandle . P.openOffline
 
--- | 'openLive' is used to get a packet descriptor that can be used to
--- look at packets on the network. The arguments are the device name,
--- the snapshot legnth (in bytes), the promiscuity of the interface
--- ('True' == promiscuous) and a timeout in milliseconds.
+-- | 'openLive' is used to get a 'PcapHandle' that can be used to look
+-- at packets on the network. The arguments are the device name, the
+-- snapshot length (in bytes), the promiscuity of the interface
+-- ('True' == promiscuous) and a timeout in microseconds.
 -- 
--- Using \"any\" as the device name will capture packets from all
--- interfaces.  On some systems, reading from the \"any\" device is
+-- The timeout allows the packet filter to delay while accumulating
+-- multiple packets, which is more efficient than reading packets one
+-- by one.  A timeout of zero will wait indefinitely for \"enough\"
+-- packets to arrive.
+--
+-- Using @\"any\"@ as the device name will capture packets from all
+-- interfaces.  On some systems, reading from the @\"any\"@ device is
 -- incompatible with setting the interfaces into promiscuous mode. In
 -- that case, only packets whose link layer addresses match those of
 -- the interfaces are captured.
 --
-openLive :: String	-- ^ device name
-	 -> Int		-- ^ snapshot length
-	 -> Bool	-- ^ set to promiscuous mode?
-	 -> Int		-- ^ timeout in milliseconds
+openLive :: String              -- ^ device name
+	 -> Int                 -- ^ snapshot length
+	 -> Bool                -- ^ set interface to promiscuous mode?
+	 -> Int64		-- ^ timeout in microseconds
 	 -> IO PcapHandle
 openLive name snaplen promisc timeout =
-    PcapHandle `fmap` P.openLive name snaplen promisc timeout
+    let timeout' | timeout <= 0 = 0
+                 | otherwise = fromIntegral (timeout `div` 1000)
+    in PcapHandle `fmap` P.openLive name snaplen promisc timeout'
 
--- | 'openDead' is used to get a packet capture descriptor without
--- opening a file or device. It is typically used to test packet
--- filter compilation by 'setFilter'. The arguments are the link type
--- and the snapshot length.
+-- | 'openDead' is used to get a 'PcapHandle' without opening a file
+-- or device. It is typically used to test packet filter compilation
+-- by 'setFilter'. The arguments are the link type and the snapshot
+-- length.
 --
 openDead :: Link		-- ^ datalink type
 	 -> Int		-- ^ snapshot length
-	 -> IO PcapHandle	-- ^ packet capture descriptor
+	 -> IO PcapHandle
 openDead link snaplen = PcapHandle `fmap` P.openDead link snaplen
 
 {-# INLINE withPcap #-}
@@ -180,13 +166,11 @@ withDump (DumpHandle hdl) f = withForeignPtr hdl f
 -- Open a dump device
 --
 
--- | 'openDump' opens a \"save file\" for writing. This save file is
--- written to by the dump function. The arguments are a raw packet
--- capture descriptor and the filename, with \"-\" as a synonym for
--- @stdout@.
-openDump :: PcapHandle	-- ^ packet capture descriptor
-	 -> String	-- ^ savefile name
-	 -> IO DumpHandle	-- ^ davefile descriptor
+-- | 'openDump' opens a dump file for writing. This dump file is
+-- written to by the 'dump' function.
+openDump :: PcapHandle	-- ^ packet capture handle
+	 -> FilePath	-- ^ name of dump file to write to
+	 -> IO DumpHandle
 openDump pch name = withPcap pch $ \hdl ->
     DumpHandle `fmap` P.openDump hdl name
 
@@ -194,12 +178,12 @@ openDump pch name = withPcap pch $ \hdl ->
 -- Set the filter
 --
 
--- | Set a filter on the specified packet capture descriptor. Valid
+-- | Set a filter on the specified packet capture handle. Valid
 -- filter strings are those accepted by @tcpdump@.
-setFilter :: PcapHandle	-- ^ packet capture descriptor
-	  -> String	-- ^ filter string
+setFilter :: PcapHandle         -- ^ handle on which to set filter
+	  -> String             -- ^ filter string
 	  -> Bool		-- ^ optimize?
-	  -> Word32	-- ^ IPv4 network mask
+	  -> Word32             -- ^ IPv4 network mask
 	  -> IO ()
 setFilter pch filt opt mask = withPcap pch $ \hdl ->
     P.setFilter hdl filt opt mask
@@ -209,18 +193,18 @@ setFilter pch filt opt mask = withPcap pch $ \hdl ->
 -- Set or read the device mode (blocking/nonblocking)
 --
 
--- | Set a packet capture descriptor into non-blocking mode, if the
--- second argument is True, otherwise put it in blocking mode. Note
--- that the packet capture descriptor must have been obtaine from
--- 'openLive'.
+-- | Set the given 'PcapHandle' into non-blocking mode if the second
+-- argument is 'True', otherwise put it in blocking mode. Note that
+-- the 'PcapHandle' must have been obtained from 'openLive'.
 --
-setNonBlock :: PcapHandle -> Bool -> IO ()
+setNonBlock :: PcapHandle       -- ^ must have been obtained from 'openLive'
+            -> Bool             -- ^ set\/unset blocking mode
+            -> IO ()
 setNonBlock pch block = withPcap pch $ \hdl -> P.setNonBlock hdl block
 
--- | Return the blocking status of the packet capture
--- descriptor. 'True' indicates that the descriptor is
--- non-blocking. Descriptors referring to savefiles opened by
--- 'openDump' always return 'False'.
+-- | Return the blocking status of the 'PcapHandle'. 'True' indicates
+-- that the handle is non-blocking. Handles referring to dump files
+-- opened by 'openDump' always return 'False'.
 getNonBlock :: PcapHandle -> IO Bool
 getNonBlock pch = withPcap pch P.getNonBlock
 
@@ -238,20 +222,20 @@ hdrDiffTime pkt = picosecondsToDiffTime (fromIntegral (hdrTime pkt) * 1000000)
 -- Reading packets
 --
 
--- | Collect and process packets. The arguments are the packet capture
--- descriptor, the count and a callback function.
+-- | Collect and process packets.
 --
 -- The count is the maximum number of packets to process before
 -- returning.  A count of -1 means process all of the packets received
 -- in one buffer (if a live capture) or all of the packets in a
--- savefile (if offline).
+-- dump file (if offline).
 --
 -- The callback function is passed two arguments, a packet header
 -- record and a pointer to the packet data (@Ptr Word8@). THe header
 -- record contains the number of bytes captured, whcih can be used to
--- marshal the data into a list or array.
+-- marshal the data into a list, array, or 'B.ByteString' (using
+-- 'toBS').
 --
-dispatch :: PcapHandle	-- ^ packet capture descriptor
+dispatch :: PcapHandle
 	 -> Int		-- ^ number of packets to process
 	 -> Callback	-- ^ packet processing function
 	 -> IO Int	-- ^ number of packets read
@@ -263,8 +247,8 @@ dispatch pch count f = withPcap pch $ \hdl -> P.dispatch hdl count f
 -- 
 -- This function does not return when a live read tiemout occurs. Use
 -- 'dispatch' instead if you wnat to specify a timeout.
-loop :: PcapHandle	-- ^ packet cpature descriptor
-     -> Int		-- ^ number of packet to read
+loop :: PcapHandle
+     -> Int		-- ^ number of packets to read (-1 == loop forever)
      -> Callback	-- ^ packet processing function
      -> IO Int	-- ^ number of packets read
 loop pch count f = withPcap pch $ \hdl -> P.loop hdl count f
@@ -281,14 +265,13 @@ toBS (hdr, ptr) = do
 
 -- | Read the next packet (equivalent to calling 'dispatch' with a
 -- count of 1).
-next :: PcapHandle			-- ^ packet capture descriptor
-     -> IO (PktHdr, Ptr Word8)	-- ^ packet header and data of the next packet
+next :: PcapHandle -> IO (PktHdr, Ptr Word8)
 next pch = withPcap pch P.next
 
 -- | Write the packet data given by the second and third arguments to
--- a savefile opened by 'openDead'. 'dump' is designed so it can be
+-- a dump file opened by 'openDead'. 'dump' is designed so it can be
 -- easily used as a default callback function by 'dispatch' or 'loop'.
-dump :: DumpHandle	-- ^ savefile descriptor
+dump :: DumpHandle
      -> Ptr PktHdr		-- ^ packet header record
      -> Ptr Word8		-- ^ packet data
      -> IO ()
@@ -298,20 +281,17 @@ dump dh hdr pkt = withDump dh $ \hdl -> P.dump hdl hdr pkt
 -- Datalink manipulation
 --
 
--- | Returns the datalink type associated with the given pcap
--- descriptor.
---
+-- | Returns the datalink type associated with the given handle.
 datalink :: PcapHandle -> IO Link
 datalink pch = withPcap pch P.datalink
 
 
--- | Sets the datalink type for a given pcap descriptor.
---
+-- | Sets the datalink type for the given handle.
 setDatalink :: PcapHandle -> Link -> IO ()
 setDatalink pch link = withPcap pch $ \hdl -> P.setDatalink hdl link
 
--- | List all the datalink types supported by a pcap
--- descriptor. Entries from the resulting list are valid arguments to
+-- | List all the datalink types supported by the given
+-- handle. Entries from the resulting list are valid arguments to
 -- 'setDatalink'.
 listDatalinks :: PcapHandle -> IO [Link]
 listDatalinks pch = withPcap pch P.listDatalinks
@@ -319,20 +299,15 @@ listDatalinks pch = withPcap pch P.listDatalinks
 -- | Returns the number of packets received, the number of packets
 -- dropped by the packet filter and the number of packets dropped by
 -- the interface (before processing by the packet filter).
---
 statistics :: PcapHandle -> IO Statistics
 statistics pch = withPcap pch P.statistics
-
---
--- Version information
---
 
 -- | Version of the library.  The returned pair consists of the major
 -- and minor version numbers.
 version :: PcapHandle -> IO (Int, Int)
 version pch = withPcap pch P.version
 
--- | 'isSwapped' returns 'True' if the current save file uses a
+-- | 'isSwapped' returns 'True' if the current dump file uses a
 -- different byte order than the one native to the system.
 isSwapped :: PcapHandle -> IO Bool
 isSwapped pch = withPcap pch P.isSwapped
