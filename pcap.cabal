@@ -7,8 +7,8 @@ description:     FFI Wrapper around libpcap
 maintainer:      Bryan O'Sullivan <bos@serpentine.com>
 author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
 category:        Network
-exposed-modules: Network.Pcap
-build-depends:   base, network, haskell98
+exposed-modules: Network.Pcap.Base
+build-depends:   base, haskell98, network, time
 extensions:      ForeignFunctionInterface
 ghc-options:     -fglasgow-exts
 include-dirs:    include

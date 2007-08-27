@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 ------------------------------------------------------------------------------
 -- |
---  Module	: Network.Pcap
+--  Module	: Network.Pcap.Base
 --  Copyright	: (c) Antiope Associates LLC 2004
 --  License	: BSD-style (see the file libraries/network/license)
 --
@@ -49,7 +49,7 @@
 ------------------------------------------------------------------------------
 
 
-module Network.Pcap (
+module Network.Pcap.Base (
 
 	-- * Types
 	Pcap,
