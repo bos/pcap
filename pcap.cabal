@@ -14,6 +14,7 @@ extensions:      ForeignFunctionInterface
 ghc-options:     -W -O -funbox-strict-fields
 include-dirs:    include
 includes:        pcapconfig.h pcap.h
+install-includes: pcapconfig.h
 extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
                  pcap.buildinfo.in
