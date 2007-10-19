@@ -41,6 +41,7 @@ module Network.Pcap
     , DumpHandle
     , BpfProgram
     , Callback
+    , CallbackBS
     , Direction(..)
     , Link(..)
     , Interface(..)
@@ -82,6 +83,12 @@ module Network.Pcap
     , next			-- :: PcapHandle -> IO (PktHdr, Ptr Word8)
     , dump			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
 
+    -- ** 'B.ByteString' variants
+    , dispatchBS		-- :: PcapHandle -> Int -> CallbackBS -> IO Int
+    , loopBS			-- :: PcapHandle -> Int -> CallbackBS -> IO Int
+    , nextBS			-- :: PcapHandle -> IO (PktHdr, B.ByteStringa)
+    , dumpBS			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> B.ByteString -> IO ()
+
     -- * Sending packets
     , sendPacket
     , sendPacketBS
@@ -110,12 +117,14 @@ import Network.Pcap.Base (BpfProgram, Callback, Interface(..), Link(..),
                           PcapAddr(..), PktHdr(..), SockAddr(..), Statistics,
                           compileFilter, findAllDevs, lookupDev, lookupNet)
 
-
 -- | packet capture handle
 newtype PcapHandle  = PcapHandle (ForeignPtr P.PcapTag)
 
 -- | dump file handle
 newtype DumpHandle = DumpHandle (ForeignPtr P.PcapDumpTag)
+
+-- | callback using 'B.ByteString' for packet body
+type CallbackBS = PktHdr -> B.ByteString -> IO ()
 
 --
 -- Open a device
@@ -239,6 +248,14 @@ hdrDiffTime pkt = picosecondsToDiffTime (fromIntegral (hdrTime pkt) * 1000000)
 -- Reading packets
 --
 
+-- | Wrap a callback that expects a 'B.ByteString' so that it is
+-- usable as a regular 'Callback'.
+wrapBS :: CallbackBS -> Callback
+wrapBS f hdr ptr = do
+  let len = hdrCaptureLength hdr
+  bs <- B.create (fromIntegral len) $ \p -> B.memcpy p ptr (fromIntegral len)
+  f hdr bs
+
 -- | Collect and process packets.
 --
 -- The count is the maximum number of packets to process before
@@ -253,10 +270,17 @@ hdrDiffTime pkt = picosecondsToDiffTime (fromIntegral (hdrTime pkt) * 1000000)
 -- 'toBS').
 --
 dispatch :: PcapHandle
-	 -> Int		-- ^ number of packets to process
-	 -> Callback	-- ^ packet processing function
-	 -> IO Int	-- ^ number of packets read
+	 -> Int                 -- ^ number of packets to process
+	 -> Callback            -- ^ packet processing function
+	 -> IO Int              -- ^ number of packets read
 dispatch pch count f = withPcap pch $ \hdl -> P.dispatch hdl count f
+
+-- | Variant of 'dispatch' for use with 'B.ByteString'.
+dispatchBS :: PcapHandle
+	   -> Int		-- ^ number of packets to process
+	   -> CallbackBS        -- ^ packet processing function
+	   -> IO Int            -- ^ number of packets read
+dispatchBS pch count f = withPcap pch $ \hdl -> P.dispatch hdl count (wrapBS f)
 
 -- | Similar to 'dispatch', but loop until the number of packets
 -- specified by the second argument are read. A negative value loops
@@ -270,6 +294,13 @@ loop :: PcapHandle
      -> IO Int	-- ^ number of packets read
 loop pch count f = withPcap pch $ \hdl -> P.loop hdl count f
 
+-- | Variant of 'loop' for use with 'B.ByteString'.
+loopBS :: PcapHandle
+       -> Int		-- ^ number of packets to read (-1 == loop forever)
+       -> CallbackBS	-- ^ packet processing function
+       -> IO Int	-- ^ number of packets read
+loopBS pch count f = withPcap pch $ \hdl -> P.loop hdl count (wrapBS f)
+
 
 -- | Send a raw packet through the network interface.
 sendPacket :: PcapHandle
@@ -278,7 +309,7 @@ sendPacket :: PcapHandle
            -> IO ()
 sendPacket pch buf size = withPcap pch $ \hdl -> P.sendPacket hdl buf size
 
--- | Send a raw packet through the network interface.
+-- | Variant of 'sendPacket' for use with 'B.ByteString'.
 sendPacketBS :: PcapHandle
              -> B.ByteString    -- ^ packet data (including link-level header)
              -> IO ()
@@ -299,6 +330,9 @@ toBS (hdr, ptr) = do
 next :: PcapHandle -> IO (PktHdr, Ptr Word8)
 next pch = withPcap pch P.next
 
+nextBS :: PcapHandle -> IO (PktHdr, B.ByteString)
+nextBS pch = withPcap pch P.next >>= toBS
+
 -- | Write the packet data given by the second and third arguments to
 -- a dump file opened by 'openDead'. 'dump' is designed so it can be
 -- easily used as a default callback function by 'dispatch' or 'loop'.
@@ -307,6 +341,14 @@ dump :: DumpHandle
      -> Ptr Word8		-- ^ packet data
      -> IO ()
 dump dh hdr pkt = withDump dh $ \hdl -> P.dump hdl hdr pkt
+
+dumpBS :: DumpHandle
+       -> Ptr PktHdr		-- ^ packet header record
+       -> B.ByteString		-- ^ packet data
+       -> IO ()
+dumpBS dh hdr s =
+    withDump dh $ \hdl ->
+        B.unsafeUseAsCString s $ \buf -> P.dump hdl hdr (castPtr buf)
 
 --
 -- Datalink manipulation
