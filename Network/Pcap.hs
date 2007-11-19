@@ -105,7 +105,13 @@ module Network.Pcap
     , snapshotLen		-- :: PcapHandle -> IO Int
     ) where
 
+#ifdef BYTESTRING_IN_BASE
 import qualified Data.ByteString.Base as B
+import qualified Data.ByteString.Base as BU
+#else
+import qualified Data.ByteString.Internal as B
+import qualified Data.ByteString.Unsafe as BU
+#endif
 import Data.Int (Int64)
 import Data.Time.Clock (DiffTime, picosecondsToDiffTime)
 import Data.Word (Word8, Word32)
@@ -313,7 +319,7 @@ sendPacket pch buf size = withPcap pch $ \hdl -> P.sendPacket hdl buf size
 sendPacketBS :: PcapHandle
              -> B.ByteString    -- ^ packet data (including link-level header)
              -> IO ()
-sendPacketBS pch s = B.unsafeUseAsCStringLen s $ \(buf, len) ->
+sendPacketBS pch s = BU.unsafeUseAsCStringLen s $ \(buf, len) ->
     sendPacket pch (castPtr buf) len
 
 -- | Represent a captured packet as a 'B.ByteString'.  Suitable for
@@ -348,7 +354,7 @@ dumpBS :: DumpHandle
        -> IO ()
 dumpBS dh hdr s =
     withDump dh $ \hdl ->
-        B.unsafeUseAsCString s $ \buf -> P.dump hdl hdr (castPtr buf)
+        BU.unsafeUseAsCString s $ \buf -> P.dump hdl hdr (castPtr buf)
 
 --
 -- Datalink manipulation

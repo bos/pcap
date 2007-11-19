@@ -114,7 +114,11 @@ module Network.Pcap.Base
 import Control.Monad (when)
 import Data.Maybe (isNothing, fromJust )
 import Data.ByteString ()
+#ifdef BYTESTRING_IN_BASE
 import qualified Data.ByteString.Base as B
+#else
+import qualified Data.ByteString.Internal as B
+#endif
 import Data.Word (Word8, Word32)
 import Foreign.Ptr (Ptr, plusPtr, nullPtr, FunPtr, freeHaskellFunPtr)
 import Foreign.C.String (CString, peekCString, withCString)

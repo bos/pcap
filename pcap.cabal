@@ -1,5 +1,5 @@
 name:            pcap
-version:         0.4
+version:         0.4.1
 license:         BSD4
 license-file:    LICENSE
 synopsis:        A system-independent interface for user-level packet capture
@@ -7,14 +7,33 @@ description:     A system-independent interface for user-level packet capture
 maintainer:      Bryan O'Sullivan <bos@serpentine.com>
 author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
 category:        Network
-exposed-modules: Network.Pcap.Base
-                 Network.Pcap
-build-depends:   base >= 2.0, haskell98, network, time
-extensions:      ForeignFunctionInterface
-ghc-options:     -W -O -funbox-strict-fields
-include-dirs:    include
-includes:        pcapconfig.h pcap.h
-install-includes: pcapconfig.h
+cabal-version:   >= 1.2.1
 extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
                  pcap.buildinfo.in
+extra-tmp-files: config.log config.status
+
+flag bytestring-in-base
+  description: bytestring was part of the base library in ghc-6.6
+               days. The bytestring low level interface is in
+               Data.ByteString.Internal and Data.Bytestring.Unsafe not
+               Data.ByteString.Base
+
+
+library
+  if flag(bytestring-in-base)
+    -- bytestring was in base-2.0 and 2.1.1
+    build-depends: base >= 2.0 && < 2.2
+    cpp-options:   -DBYTESTRING_IN_BASE
+  else
+    build-depends: base < 2.0 || >= 2.2, bytestring >= 0.9 
+
+  build-depends:   haskell98, network, time
+  exposed-modules: Network.Pcap.Base
+                   Network.Pcap
+  extensions:      ForeignFunctionInterface, CPP
+  ghc-options:     -W -O -funbox-strict-fields
+
+  include-dirs:    include
+  includes:        pcapconfig.h pcap.h
+  install-includes: pcapconfig.h
