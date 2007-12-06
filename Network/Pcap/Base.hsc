@@ -132,7 +132,6 @@ import Network.Socket (Family(..), unpackFamily)
 import System.IO.Error (userError)
 
 #include <pcap.h>
-#include <pcap-bpf.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
@@ -978,6 +977,9 @@ data Link
 #endif
 #ifdef DLT_IEEE802_15_4
        | DLT_IEEE802_15_4 -- ^ IEEE 802.15.4, exactly as in the spec
+#endif
+#ifdef DLT_PFSYNC
+       | DLT_PFSYNC
 #endif
 	deriving (Eq, Ord, Read, Show)
 
