@@ -1,5 +1,5 @@
 name:            pcap
-version:         0.4.1
+version:         0.4.2
 license:         BSD4
 license-file:    LICENSE
 synopsis:        A system-independent interface for user-level packet capture
