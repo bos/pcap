@@ -12,6 +12,7 @@ extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
                  pcap.buildinfo.in
 extra-tmp-files: config.log config.status
+build-type:      Simple
 
 flag bytestring-in-base
   description: bytestring was part of the base library in ghc-6.6
