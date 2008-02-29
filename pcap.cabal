@@ -33,7 +33,7 @@ library
   exposed-modules: Network.Pcap.Base
                    Network.Pcap
   extensions:      ForeignFunctionInterface, CPP
-  ghc-options:     -W -O -funbox-strict-fields
+  ghc-options:     -W -O2 -funbox-strict-fields
 
   include-dirs:    include
   includes:        pcapconfig.h pcap.h
