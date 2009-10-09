@@ -297,9 +297,9 @@ setFilter :: Ptr PcapTag	-- ^ packet capture descriptor
 	  -> Word32	-- ^ IPv4 network mask
 	  -> IO ()
 setFilter hdl filt opt mask =
-    withCString filt $ \filter -> do
+    withCString filt $ \filtstr -> do
       allocaBytes (#size struct bpf_program) $ \bpfp -> do
-        pcap_compile hdl bpfp filter (fromBool opt) (fromIntegral mask) >>=
+        pcap_compile hdl bpfp filtstr (fromBool opt) (fromIntegral mask) >>=
             throwPcapIf hdl (== -1)
 	pcap_setfilter hdl bpfp >>= throwPcapIf hdl (== -1)
 	pcap_freecode bpfp
@@ -313,12 +313,12 @@ compileFilter :: Int		-- ^ snapshot length
 	      -> Word32	-- ^ IPv4 network mask
 	      -> IO BpfProgram
 compileFilter snaplen link filt opt mask =
-    withCString filt $ \filter ->
+    withCString filt $ \filtstr ->
       allocaBytes (#size struct bpf_program) $ \bpfp -> do
 	ret  <- pcap_compile_nopcap (fromIntegral snaplen)
                   (packLink link)
                   bpfp
-                  filter
+                  filtstr
                   (fromBool opt)
                   (fromIntegral mask)
 	when (ret == (-1)) $
@@ -687,11 +687,11 @@ statistics hdl =
     allocaBytes (#size struct pcap_stat) $ \stats -> do
       pcap_stats hdl stats >>= throwPcapIf hdl (== -1)
       recv   <- (#peek struct pcap_stat, ps_recv) stats
-      drop   <- (#peek struct pcap_stat, ps_drop) stats
+      pdrop  <- (#peek struct pcap_stat, ps_drop) stats
       ifdrop <- (#peek struct pcap_stat, ps_ifdrop) stats
 
       return Statistics { statReceived = fromIntegral (recv :: CUInt)
-                        , statDropped = fromIntegral (drop :: CUInt)
+                        , statDropped = fromIntegral (pdrop :: CUInt)
                         , statIfaceDropped = fromIntegral (ifdrop :: CUInt)
                         }
 
