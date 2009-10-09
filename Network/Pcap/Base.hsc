@@ -123,8 +123,8 @@ import Data.Word (Word8, Word32)
 import Foreign.Ptr (Ptr, plusPtr, nullPtr, FunPtr, freeHaskellFunPtr)
 import Foreign.C.String (CString, peekCString, withCString)
 import Foreign.C.Types (CInt, CUInt, CChar, CUChar, CLong)
-import Foreign.Concurrent (addForeignPtrFinalizer, newForeignPtr)
-import Foreign.ForeignPtr (ForeignPtr,FinalizerPtr)
+import Foreign.Concurrent (newForeignPtr)
+import Foreign.ForeignPtr (ForeignPtr)
 import Foreign.Marshal.Alloc (alloca, allocaBytes, free)
 import Foreign.Marshal.Array (allocaArray, peekArray)
 import Foreign.Marshal.Utils (fromBool, toBool)
@@ -214,7 +214,6 @@ openOffline :: FilePath	-- ^ filename
 openOffline name =
     withCString name $ \namePtr -> do
       ptr <- withErrBuf (== nullPtr) (pcap_open_offline namePtr)
---      final <- h2c pcap_close
       newForeignPtr ptr (pcap_close ptr)
 
 -- | 'openLive' is used to get a packet descriptor that can be used to
@@ -237,8 +236,6 @@ openLive name snaplen promisc timeout =
     withCString name $ \namePtr -> do
       ptr <- withErrBuf (== nullPtr) $ pcap_open_live namePtr
              (fromIntegral snaplen) (fromBool promisc) (fromIntegral timeout)
---      final <- h2c pcap_close
---      newForeignPtr final ptr
       newForeignPtr ptr (pcap_close ptr)
 
 -- | 'openDead' is used to get a packet capture descriptor without
@@ -255,8 +252,6 @@ openDead link snaplen = do
     when (ptr == nullPtr) $
         ioError $ userError "Can't open dead pcap device"
     newForeignPtr ptr (pcap_close ptr)
---    final <- h2c pcap_close
---    newForeignPtr final ptr
 
 
 foreign import ccall unsafe pcap_open_offline
@@ -267,8 +262,6 @@ foreign import ccall unsafe pcap_open_live
     :: CString -> CInt -> CInt -> CInt -> ErrBuf -> IO (Ptr PcapTag)
 foreign import ccall unsafe pcap_open_dead
     :: CInt -> CInt -> IO (Ptr PcapTag)
-foreign import ccall "wrapper" h2c
-    :: (Ptr PcapTag -> IO()) -> IO (FinalizerPtr a)
 
 
 --
@@ -286,15 +279,11 @@ openDump hdl name =
     withCString name $ \namePtr -> do
       ptr <- pcap_dump_open hdl namePtr >>= throwPcapIf hdl (== nullPtr)
       newForeignPtr ptr (pcap_dump_close ptr)
---      final <- h2c' pcap_dump_close
---      newForeignPtr final ptr
 
 foreign import ccall unsafe pcap_dump_open
     :: Ptr PcapTag -> CString -> IO (Ptr PcapDumpTag)
 foreign import ccall unsafe pcap_dump_close
     :: Ptr PcapDumpTag -> IO ()
-foreign import ccall "wrapper" h2c'
-    :: (Ptr PcapDumpTag -> IO()) -> IO (FinalizerPtr a)
 
 --
 -- Set the filter
@@ -335,8 +324,6 @@ compileFilter snaplen link filt opt mask =
 	when (ret == (-1)) $
 	    ioError $ userError "Pcap.compileFilter error"
         newForeignPtr bpfp (pcap_freecode bpfp)
---        final <- h2c'' pcap_freecode
---        newForeignPtr final bpfp
 
 foreign import ccall pcap_compile
 	:: Ptr PcapTag  -> Ptr BpfProgramTag -> CString -> CInt -> CInt
@@ -348,8 +335,6 @@ foreign import ccall pcap_setfilter
 	:: Ptr PcapTag  -> Ptr BpfProgramTag -> IO CInt
 foreign import ccall pcap_freecode
 	:: Ptr BpfProgramTag -> IO ()
-foreign import ccall "wrapper" h2c''
-	:: (Ptr BpfProgramTag -> IO ()) -> IO (FinalizerPtr a)
 
 --
 -- Find devices
