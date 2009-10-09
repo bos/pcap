@@ -123,7 +123,8 @@ import Data.Word (Word8, Word32)
 import Foreign.Ptr (Ptr, plusPtr, nullPtr, FunPtr, freeHaskellFunPtr)
 import Foreign.C.String (CString, peekCString, withCString)
 import Foreign.C.Types (CInt, CUInt, CChar, CUChar, CLong)
-import Foreign.ForeignPtr (ForeignPtr, FinalizerPtr, newForeignPtr)
+import Foreign.Concurrent (addForeignPtrFinalizer, newForeignPtr)
+import Foreign.ForeignPtr (ForeignPtr,FinalizerPtr)
 import Foreign.Marshal.Alloc (alloca, allocaBytes, free)
 import Foreign.Marshal.Array (allocaArray, peekArray)
 import Foreign.Marshal.Utils (fromBool, toBool)
@@ -213,8 +214,8 @@ openOffline :: FilePath	-- ^ filename
 openOffline name =
     withCString name $ \namePtr -> do
       ptr <- withErrBuf (== nullPtr) (pcap_open_offline namePtr)
-      final <- h2c pcap_close
-      newForeignPtr final ptr
+--      final <- h2c pcap_close
+      newForeignPtr ptr (pcap_close ptr)
 
 -- | 'openLive' is used to get a packet descriptor that can be used to
 -- look at packets on the network. The arguments are the device name,
@@ -236,8 +237,9 @@ openLive name snaplen promisc timeout =
     withCString name $ \namePtr -> do
       ptr <- withErrBuf (== nullPtr) $ pcap_open_live namePtr
              (fromIntegral snaplen) (fromBool promisc) (fromIntegral timeout)
-      final <- h2c pcap_close
-      newForeignPtr final ptr
+--      final <- h2c pcap_close
+--      newForeignPtr final ptr
+      newForeignPtr ptr (pcap_close ptr)
 
 -- | 'openDead' is used to get a packet capture descriptor without
 -- opening a file or device. It is typically used to test packet
@@ -252,8 +254,9 @@ openDead link snaplen = do
 	   (fromIntegral snaplen)
     when (ptr == nullPtr) $
         ioError $ userError "Can't open dead pcap device"
-    final <- h2c pcap_close
-    newForeignPtr final ptr
+    newForeignPtr ptr (pcap_close ptr)
+--    final <- h2c pcap_close
+--    newForeignPtr final ptr
 
 
 foreign import ccall unsafe pcap_open_offline
@@ -282,8 +285,9 @@ openDump :: Ptr PcapTag	-- ^ packet capture descriptor
 openDump hdl name =
     withCString name $ \namePtr -> do
       ptr <- pcap_dump_open hdl namePtr >>= throwPcapIf hdl (== nullPtr)
-      final <- h2c' pcap_dump_close
-      newForeignPtr final ptr
+      newForeignPtr ptr (pcap_dump_close ptr)
+--      final <- h2c' pcap_dump_close
+--      newForeignPtr final ptr
 
 foreign import ccall unsafe pcap_dump_open
     :: Ptr PcapTag -> CString -> IO (Ptr PcapDumpTag)
@@ -330,8 +334,9 @@ compileFilter snaplen link filt opt mask =
                   (fromIntegral mask)
 	when (ret == (-1)) $
 	    ioError $ userError "Pcap.compileFilter error"
-        final <- h2c'' pcap_freecode
-        newForeignPtr final bpfp
+        newForeignPtr bpfp (pcap_freecode bpfp)
+--        final <- h2c'' pcap_freecode
+--        newForeignPtr final bpfp
 
 foreign import ccall pcap_compile
 	:: Ptr PcapTag  -> Ptr BpfProgramTag -> CString -> CInt -> CInt
