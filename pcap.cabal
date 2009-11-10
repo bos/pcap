@@ -1,5 +1,5 @@
 name:            pcap
-version:         0.4.4
+version:         0.4.5
 license:         BSD3
 license-file:    LICENSE
 synopsis:        A system-independent interface for user-level packet capture
@@ -7,12 +7,12 @@ description:     A system-independent interface for user-level packet capture
 maintainer:      Bryan O'Sullivan <bos@serpentine.com>
 author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
 category:        Network
-cabal-version:   >= 1.2.1
+cabal-version:   >= 1.4
 extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
                  pcap.buildinfo.in
 extra-tmp-files: config.log config.status
-build-type:      Simple
+build-type:      Configure
 
 flag bytestring-in-base
   description: bytestring was part of the base library in ghc-6.6
