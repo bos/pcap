@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------------
 -- |
---  Module	: Network.Pcap
---  Copyright	: Bryan O'Sullivan 2007, Antiope Associates LLC 2004
---  License	: BSD-style
---  Maintainer	: bos@serpentine.com
---  Stability	: experimental
---  Portability	: non-portable
--- 
+--  Module      : Network.Pcap
+--  Copyright   : Bryan O'Sullivan 2007, Antiope Associates LLC 2004
+--  License     : BSD-style
+--  Maintainer  : bos@serpentine.com
+--  Stability   : experimental
+--  Portability : non-portable
+--
 -- The 'Network.Pcap' module is a high(ish) level binding to all of
 -- the functions in @libpcap@.  See <http://www.tcpdump.org> for more
 -- information.
@@ -14,25 +14,24 @@
 -- This module is built on the lower-level 'Network.Pcap.Base' module,
 -- which is slightly more efficient.  Don\'t use 'Network.Pcap.Base'
 -- unless profiling data indicates that you need to.
--- 
+--
 -- Only a minimum of marshaling is done on received packets.  To
 -- convert captured packet data to a 'B.ByteString' (space efficient,
 -- and with /O(1)/ access to every byte in a captured packet), use
 -- 'toBS'.
--- 
+--
 -- Note that the 'SockAddr' exported here is not the @SockAddr@ from
 -- 'Network.Socket'. The @SockAddr@ from 'Network.Socket' corresponds
 -- to @struct sockaddr_in@ in BSD terminology. The 'SockAddr' record
 -- here is BSD's @struct sockaddr@. See W.R.Stevens, TCP Illustrated,
 -- volume 2, for further elucidation.
--- 
+--
 -- This binding should be portable across systems that can use the
 -- @libpcap@ from @tcpdump.org@. It does not yet work with Winpcap, a
 -- similar library for Windows, although adapting it should not prove
 -- difficult.
 --
 ------------------------------------------------------------------------------
-
 
 module Network.Pcap
     (
@@ -52,42 +51,42 @@ module Network.Pcap
     , Statistics(..)
 
     -- * Device opening
-    , openOffline		-- :: FilePath -> IO Pcap
-    , openLive           -- :: String -> Int -> Bool -> Int -> IO Pcap
-    , openDead                  -- :: Int    -> Int -> IO Pcap
-    , openDump                 -- :: PcapHandle -> FilePath -> IO Pdump
+    , openOffline               -- :: FilePath -> IO Pcap
+    , openLive                  -- :: String -> Int -> Bool -> Int -> IO Pcap
+    , openDead                  -- :: Int -> Int -> IO Pcap
+    , openDump                  -- :: PcapHandle -> FilePath -> IO Pdump
 
     -- * Filter handling
-    , setFilter -- :: PcapHandle -> String -> Bool -> Word32 -> IO ()
-    , compileFilter -- :: Int -> Int  -> String -> Bool -> Word32 -> IO BpfProgram
+    , setFilter                 -- :: PcapHandle -> String -> Bool -> Word32 -> IO ()
+    , compileFilter             -- :: Int -> Int -> String -> Bool -> Word32 -> IO BpfProgram
 
     -- * Device utilities
     , lookupDev                 -- :: IO String
-    , findAllDevs		-- :: IO [Interface]
+    , findAllDevs               -- :: IO [Interface]
     , lookupNet                 -- :: String -> IO Network
 
     -- * Interface control
 
-    , setNonBlock		-- :: PcapHandle -> Bool -> IO ()
-    , getNonBlock		-- :: PcapHandle -> IO Bool
+    , setNonBlock               -- :: PcapHandle -> Bool -> IO ()
+    , getNonBlock               -- :: PcapHandle -> IO Bool
     , setDirection
 
     -- * Link layer utilities
     , datalink                  -- :: PcapHandle -> IO Link
-    , setDatalink		-- :: PcapHandle -> Link -> IO ()
-    , listDatalinks		-- :: PcapHandle -> IO [Link]
+    , setDatalink               -- :: PcapHandle -> Link -> IO ()
+    , listDatalinks             -- :: PcapHandle -> IO [Link]
 
     -- * Packet processing
-    , dispatch		-- :: PcapHandle -> Int -> Callback -> IO Int
-    , loop			-- :: PcapHandle -> Int -> Callback -> IO Int
-    , next			-- :: PcapHandle -> IO (PktHdr, Ptr Word8)
-    , dump			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
+    , dispatch                  -- :: PcapHandle -> Int -> Callback -> IO Int
+    , loop                      -- :: PcapHandle -> Int -> Callback -> IO Int
+    , next                      -- :: PcapHandle -> IO (PktHdr, Ptr Word8)
+    , dump                      -- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
 
     -- ** 'B.ByteString' variants
-    , dispatchBS		-- :: PcapHandle -> Int -> CallbackBS -> IO Int
-    , loopBS			-- :: PcapHandle -> Int -> CallbackBS -> IO Int
-    , nextBS			-- :: PcapHandle -> IO (PktHdr, B.ByteStringa)
-    , dumpBS			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> B.ByteString -> IO ()
+    , dispatchBS                -- :: PcapHandle -> Int -> CallbackBS -> IO Int
+    , loopBS                    -- :: PcapHandle -> Int -> CallbackBS -> IO Int
+    , nextBS                    -- :: PcapHandle -> IO (PktHdr, B.ByteStringa)
+    , dumpBS                    -- :: Ptr PcapDumpTag -> Ptr PktHdr -> B.ByteString -> IO ()
 
     -- * Sending packets
     , sendPacket
@@ -99,10 +98,10 @@ module Network.Pcap
     , hdrDiffTime
 
     -- * Miscellaneous
-    , statistics		-- :: PcapHandle -> IO Statistics
-    , version		-- :: PcapHandle -> IO (Int, Int)
-    , isSwapped		-- :: PcapHandle -> IO Bool
-    , snapshotLen		-- :: PcapHandle -> IO Int
+    , statistics                -- :: PcapHandle -> IO Statistics
+    , version                   -- :: PcapHandle -> IO (Int, Int)
+    , isSwapped                 -- :: PcapHandle -> IO Bool
+    , snapshotLen               -- :: PcapHandle -> IO Int
     ) where
 
 #ifdef BYTESTRING_IN_BASE
@@ -140,15 +139,15 @@ type CallbackBS = PktHdr -> B.ByteString -> IO ()
 -- is the same as used by @tcpdump@ and Wireshark. The string @\"-\"@
 -- is a synonym for @stdin@.
 --
-openOffline :: FilePath	-- ^ name of dump file to read
-	    -> IO PcapHandle
+openOffline :: FilePath -- ^ name of dump file to read
+            -> IO PcapHandle
 openOffline = fmap PcapHandle . P.openOffline
 
 -- | 'openLive' is used to get a 'PcapHandle' that can be used to look
 -- at packets on the network. The arguments are the device name, the
 -- snapshot length (in bytes), the promiscuity of the interface
 -- ('True' == promiscuous) and a timeout in microseconds.
--- 
+--
 -- The timeout allows the packet filter to delay while accumulating
 -- multiple packets, which is more efficient than reading packets one
 -- by one.  A timeout of zero will wait indefinitely for \"enough\"
@@ -161,10 +160,10 @@ openOffline = fmap PcapHandle . P.openOffline
 -- the interfaces are captured.
 --
 openLive :: String              -- ^ device name
-	 -> Int                 -- ^ snapshot length
-	 -> Bool                -- ^ set interface to promiscuous mode?
-	 -> Int64		-- ^ timeout in microseconds
-	 -> IO PcapHandle
+         -> Int                 -- ^ snapshot length
+         -> Bool                -- ^ set interface to promiscuous mode?
+         -> Int64               -- ^ timeout in microseconds
+         -> IO PcapHandle
 openLive name snaplen promisc timeout =
     let timeout' | timeout <= 0 = 0
                  | otherwise = fromIntegral (timeout `div` 1000)
@@ -175,9 +174,9 @@ openLive name snaplen promisc timeout =
 -- by 'setFilter'. The arguments are the link type and the snapshot
 -- length.
 --
-openDead :: Link		-- ^ datalink type
-	 -> Int		-- ^ snapshot length
-	 -> IO PcapHandle
+openDead :: Link                -- ^ datalink type
+         -> Int                 -- ^ snapshot length
+         -> IO PcapHandle
 openDead link snaplen = PcapHandle `fmap` P.openDead link snaplen
 
 {-# INLINE withPcap #-}
@@ -194,9 +193,9 @@ withDump (DumpHandle hdl) f = withForeignPtr hdl f
 
 -- | 'openDump' opens a dump file for writing. This dump file is
 -- written to by the 'dump' function.
-openDump :: PcapHandle	-- ^ packet capture handle
-	 -> FilePath	-- ^ name of dump file to write to
-	 -> IO DumpHandle
+openDump :: PcapHandle          -- ^ packet capture handle
+         -> FilePath            -- ^ name of dump file to write to
+         -> IO DumpHandle
 openDump pch name = withPcap pch $ \hdl ->
     DumpHandle `fmap` P.openDump hdl name
 
@@ -207,13 +206,12 @@ openDump pch name = withPcap pch $ \hdl ->
 -- | Set a filter on the specified packet capture handle. Valid
 -- filter strings are those accepted by @tcpdump@.
 setFilter :: PcapHandle         -- ^ handle on which to set filter
-	  -> String             -- ^ filter string
-	  -> Bool		-- ^ optimize?
-	  -> Word32             -- ^ IPv4 network mask
-	  -> IO ()
+          -> String             -- ^ filter string
+          -> Bool               -- ^ optimize?
+          -> Word32             -- ^ IPv4 network mask
+          -> IO ()
 setFilter pch filt opt mask = withPcap pch $ \hdl ->
     P.setFilter hdl filt opt mask
-
 
 --
 -- Set or read the device mode (blocking/nonblocking)
@@ -276,37 +274,36 @@ wrapBS f hdr ptr = do
 -- 'toBS').
 --
 dispatch :: PcapHandle
-	 -> Int                 -- ^ number of packets to process
-	 -> Callback            -- ^ packet processing function
-	 -> IO Int              -- ^ number of packets read
+         -> Int                 -- ^ number of packets to process
+         -> Callback            -- ^ packet processing function
+         -> IO Int              -- ^ number of packets read
 dispatch pch count f = withPcap pch $ \hdl -> P.dispatch hdl count f
 
 -- | Variant of 'dispatch' for use with 'B.ByteString'.
 dispatchBS :: PcapHandle
-	   -> Int		-- ^ number of packets to process
-	   -> CallbackBS        -- ^ packet processing function
-	   -> IO Int            -- ^ number of packets read
+           -> Int               -- ^ number of packets to process
+           -> CallbackBS        -- ^ packet processing function
+           -> IO Int            -- ^ number of packets read
 dispatchBS pch count f = withPcap pch $ \hdl -> P.dispatch hdl count (wrapBS f)
 
 -- | Similar to 'dispatch', but loop until the number of packets
 -- specified by the second argument are read. A negative value loops
 -- forever.
--- 
+--
 -- This function does not return when a live read tiemout occurs. Use
 -- 'dispatch' instead if you wnat to specify a timeout.
 loop :: PcapHandle
-     -> Int		-- ^ number of packets to read (-1 == loop forever)
-     -> Callback	-- ^ packet processing function
-     -> IO Int	-- ^ number of packets read
+     -> Int                     -- ^ number of packets to read (-1 == loop forever)
+     -> Callback                -- ^ packet processing function
+     -> IO Int                  -- ^ number of packets read
 loop pch count f = withPcap pch $ \hdl -> P.loop hdl count f
 
 -- | Variant of 'loop' for use with 'B.ByteString'.
 loopBS :: PcapHandle
-       -> Int		-- ^ number of packets to read (-1 == loop forever)
-       -> CallbackBS	-- ^ packet processing function
-       -> IO Int	-- ^ number of packets read
+       -> Int                   -- ^ number of packets to read (-1 == loop forever)
+       -> CallbackBS            -- ^ packet processing function
+       -> IO Int                -- ^ number of packets read
 loopBS pch count f = withPcap pch $ \hdl -> P.loop hdl count (wrapBS f)
-
 
 -- | Send a raw packet through the network interface.
 sendPacket :: PcapHandle
@@ -343,14 +340,14 @@ nextBS pch = withPcap pch P.next >>= toBS
 -- a dump file opened by 'openDead'. 'dump' is designed so it can be
 -- easily used as a default callback function by 'dispatch' or 'loop'.
 dump :: DumpHandle
-     -> Ptr PktHdr		-- ^ packet header record
-     -> Ptr Word8		-- ^ packet data
+     -> Ptr PktHdr              -- ^ packet header record
+     -> Ptr Word8               -- ^ packet data
      -> IO ()
 dump dh hdr pkt = withDump dh $ \hdl -> P.dump hdl hdr pkt
 
 dumpBS :: DumpHandle
-       -> Ptr PktHdr		-- ^ packet header record
-       -> B.ByteString		-- ^ packet data
+       -> Ptr PktHdr            -- ^ packet header record
+       -> B.ByteString          -- ^ packet data
        -> IO ()
 dumpBS dh hdr s =
     withDump dh $ \hdl ->
@@ -364,7 +361,6 @@ dumpBS dh hdr s =
 datalink :: PcapHandle -> IO Link
 datalink pch = withPcap pch P.datalink
 
-
 -- | Sets the datalink type for the given handle.
 setDatalink :: PcapHandle -> Link -> IO ()
 setDatalink pch link = withPcap pch $ \hdl -> P.setDatalink hdl link
@@ -374,7 +370,7 @@ setDatalink pch link = withPcap pch $ \hdl -> P.setDatalink hdl link
 -- 'setDatalink'.
 listDatalinks :: PcapHandle -> IO [Link]
 listDatalinks pch = withPcap pch P.listDatalinks
-		
+
 -- | Returns the number of packets received, the number of packets
 -- dropped by the packet filter and the number of packets dropped by
 -- the interface (before processing by the packet filter).
@@ -390,7 +386,6 @@ version pch = withPcap pch P.version
 -- different byte order than the one native to the system.
 isSwapped :: PcapHandle -> IO Bool
 isSwapped pch = withPcap pch P.isSwapped
-
 
 -- | The snapshot length that was used in the call to 'openLive'.
 snapshotLen :: PcapHandle -> IO Int

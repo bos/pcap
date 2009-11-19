@@ -1,52 +1,51 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds #-}
 ------------------------------------------------------------------------------
 -- |
---  Module	: Network.Pcap.Base
---  Copyright	: Bryan O'Sullivan 2007, Antiope Associates LLC 2004
---  License	: BSD-style
---  Maintainer	: bos@serpentine.com
---  Stability	: experimental
---  Portability	: non-portable
--- 
+--  Module      : Network.Pcap.Base
+--  Copyright   : Bryan O'Sullivan 2007, Antiope Associates LLC 2004
+--  License     : BSD-style
+--  Maintainer  : bos@serpentine.com
+--  Stability   : experimental
+--  Portability : non-portable
+--
 -- The 'Network.Pcap.Base' module is a low-level binding to all of the
 -- functions in @libpcap@.  See <http://www.tcpdump.org> for more
 -- information.
--- 
+--
 -- Only a minimum of marshaling is done.  For a higher-level interface
 -- that\'s more friendly, use the 'Network.Pcap' module.
--- 
+--
 -- To convert captured packet data to a list, extract the length of
 -- the captured buffer from the packet header record and use
 -- 'peekArray' to convert the captured data to a list.  For
 -- illustration:
 --
--- >	import Network.Pcap.Base
--- >	import Foreign.Marshal.Array (peekArray)
+-- >    import Network.Pcap.Base
+-- >    import Foreign.Marshal.Array (peekArray)
 -- >
--- >	main = do
+-- >    main = do
 -- >        let printIt :: PktHdr -> Ptr Word8 -> IO ()
--- >		printIt ph bytep = do
--- >	          a <- peekArray (fromIntegral (hdrCaptureLength ph)) bytep 
--- >	       	  print a
+-- >            printIt ph bytep = do
+-- >              a <- peekArray (fromIntegral (hdrCaptureLength ph)) bytep
+-- >              print a
 -- >
--- >	    p <- openLive "em0" 100 True 10000
--- >	    s <- withForeignPtr p $ \ptr -> do
--- >	           dispatch ptr (-1) printIt
--- >	    return ()
--- 
+-- >        p <- openLive "em0" 100 True 10000
+-- >        s <- withForeignPtr p $ \ptr -> do
+-- >               dispatch ptr (-1) printIt
+-- >        return ()
+--
 -- Note that the 'SockAddr' exported here is not the @SockAddr@ from
 -- 'Network.Socket'. The @SockAddr@ from 'Network.Socket' corresponds
 -- to @struct sockaddr_in@ in BSD terminology. The 'SockAddr' record
 -- here is BSD's @struct sockaddr@. See W.R.Stevens, TCP Illustrated,
 -- volume 2, for further elucidation.
--- 
+--
 -- This binding should be portable across systems that can use the
 -- @libpcap@ library from @tcpdump.org@. It will not work with
 -- Winpcap, a similar library for Windows, although adapting it should
 -- not prove difficult.
 --
 ------------------------------------------------------------------------------
-
 
 module Network.Pcap.Base
     (
@@ -67,36 +66,36 @@ module Network.Pcap.Base
     , Statistics(..)
 
     -- * Device opening
-    , openOffline		-- :: FilePath -> IO Pcap
-    , openLive           -- :: String -> Int -> Bool -> Int -> IO Pcap
+    , openOffline               -- :: FilePath -> IO Pcap
+    , openLive                  -- :: String -> Int -> Bool -> Int -> IO Pcap
     , openDead                  -- :: Int    -> Int -> IO Pcap
-    , openDump                 -- :: Ptr PcapTag -> FilePath -> IO Pdump
+    , openDump                  -- :: Ptr PcapTag -> FilePath -> IO Pdump
 
     -- * Filter handling
-    , setFilter -- :: Ptr PcapTag -> String -> Bool -> Word32 -> IO ()
-    , compileFilter -- :: Int -> Int  -> String -> Bool -> Word32 -> IO BpfProgram
+    , setFilter                 -- :: Ptr PcapTag -> String -> Bool -> Word32 -> IO ()
+    , compileFilter             -- :: Int -> Int -> String -> Bool -> Word32 -> IO BpfProgram
 
     -- * Device utilities
     , lookupDev                 -- :: IO String
-    , findAllDevs		-- :: IO [Interface]
+    , findAllDevs               -- :: IO [Interface]
     , lookupNet                 -- :: String -> IO Network
 
     -- * Interface control
 
-    , setNonBlock		-- :: Ptr PcapTag -> Bool -> IO ()
-    , getNonBlock		-- :: Ptr PcapTag -> IO Bool
+    , setNonBlock               -- :: Ptr PcapTag -> Bool -> IO ()
+    , getNonBlock               -- :: Ptr PcapTag -> IO Bool
     , setDirection
 
     -- * Link layer utilities
     , datalink                  -- :: Ptr PcapTag -> IO Link
-    , setDatalink		-- :: Ptr PcapTag -> Link -> IO ()
-    , listDatalinks		-- :: Ptr PcapTag -> IO [Link]
+    , setDatalink               -- :: Ptr PcapTag -> Link -> IO ()
+    , listDatalinks             -- :: Ptr PcapTag -> IO [Link]
 
     -- * Packet processing
-    , dispatch		-- :: Ptr PcapTag -> Int -> Callback -> IO Int
-    , loop			-- :: Ptr PcapTag -> Int -> Callback -> IO Int
-    , next			-- :: Ptr PcapTag -> IO (PktHdr, Ptr Word8)
-    , dump			-- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
+    , dispatch                  -- :: Ptr PcapTag -> Int -> Callback -> IO Int
+    , loop                      -- :: Ptr PcapTag -> Int -> Callback -> IO Int
+    , next                      -- :: Ptr PcapTag -> IO (PktHdr, Ptr Word8)
+    , dump                      -- :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
 
     -- * Sending packets
     , sendPacket
@@ -105,10 +104,10 @@ module Network.Pcap.Base
     , toPktHdr
 
     -- * Miscellaneous
-    , statistics		-- :: Ptr PcapTag -> IO Statistics
-    , version		-- :: Ptr PcapTag -> IO (Int, Int)
-    , isSwapped		-- :: Ptr PcapTag -> IO Bool
-    , snapshotLen		-- :: Ptr PcapTag -> IO Int
+    , statistics                -- :: Ptr PcapTag -> IO Statistics
+    , version                   -- :: Ptr PcapTag -> IO (Int, Int)
+    , isSwapped                 -- :: Ptr PcapTag -> IO Bool
+    , snapshotLen               -- :: Ptr PcapTag -> IO Int
     ) where
 
 import Control.Monad (when)
@@ -148,15 +147,15 @@ newtype PcapDumpTag = PcapDumpTag ()
 type Pdump = ForeignPtr PcapDumpTag
 
 data PktHdr = PktHdr {
-      hdrSeconds :: {-# UNPACK #-} !Word32     -- ^ timestamp (seconds)
-    , hdrUseconds :: {-# UNPACK #-} !Word32    -- ^ timestamp (microseconds)
+      hdrSeconds :: {-# UNPACK #-} !Word32       -- ^ timestamp (seconds)
+    , hdrUseconds :: {-# UNPACK #-} !Word32      -- ^ timestamp (microseconds)
     , hdrCaptureLength :: {-# UNPACK #-} !Word32 -- ^ number of bytes present in capture
-    , hdrWireLength :: {-# UNPACK #-} !Word32  -- ^ number of bytes on the wire
+    , hdrWireLength :: {-# UNPACK #-} !Word32    -- ^ number of bytes on the wire
     } deriving (Eq, Show)
 
 data Statistics = Statistics {
-      statReceived :: {-# UNPACK #-} !Word32	-- ^ packets received
-    , statDropped :: {-# UNPACK #-} !Word32	-- ^ packets dropped by @libpcap@
+      statReceived :: {-# UNPACK #-} !Word32     -- ^ packets received
+    , statDropped :: {-# UNPACK #-} !Word32      -- ^ packets dropped by @libpcap@
     , statIfaceDropped :: {-# UNPACK #-} !Word32 -- ^ packets dropped by the network interface
     } deriving (Eq, Show)
 
@@ -168,18 +167,18 @@ type ErrBuf = Ptr CChar
 
 -- | The interface structure.
 data Interface = Interface {
-      ifName :: String		-- ^ the interface name
-    , ifDescription :: String -- ^ interface description string (if any)
+      ifName :: String          -- ^ the interface name
+    , ifDescription :: String   -- ^ interface description string (if any)
     , ifAddresses :: [PcapAddr] -- ^ address families supported by this interface
     , ifFlags :: Word32
     } deriving (Eq, Read, Show)
 
 -- | The address structure.
 data PcapAddr = PcapAddr {
-      addrSA  :: SockAddr		-- ^ interface address
-    , addrMask  :: Maybe SockAddr	-- ^ network mask
-    , addrBcast :: Maybe SockAddr	-- ^ broadcast address
-    , addrPeer  :: Maybe SockAddr	-- ^ address of peer, of a point-to-point link
+      addrSA  :: SockAddr         -- ^ interface address
+    , addrMask  :: Maybe SockAddr -- ^ network mask
+    , addrBcast :: Maybe SockAddr -- ^ broadcast address
+    , addrPeer  :: Maybe SockAddr -- ^ address of peer, of a point-to-point link
     } deriving (Eq, Read, Show)
 
 -- | The socket address record. Note that this is not the same as
@@ -187,15 +186,15 @@ data PcapAddr = PcapAddr {
 -- @struct sockaddr_in@. This is the real @struct sockaddr@ from the
 -- BSD network stack.)
 data SockAddr = SockAddr {
-      saFamily  :: {-# UNPACK #-} !Family	-- ^ an address family exported by Network.Socket
+      saFamily  :: {-# UNPACK #-} !Family       -- ^ an address family exported by Network.Socket
     , saAddr    :: {-# UNPACK #-} !B.ByteString
     } deriving (Eq, Read, Show)
 
 -- | The network address record. Both the address and mask are in
 --   network byte order.
 data Network = Network {
-      netAddr :: {-# UNPACK #-} !Word32	-- ^ IPv4 network address
-    , netMask :: {-# UNPACK #-} !Word32	-- ^ IPv4 netmask
+      netAddr :: {-# UNPACK #-} !Word32 -- ^ IPv4 network address
+    , netMask :: {-# UNPACK #-} !Word32 -- ^ IPv4 netmask
     } deriving (Eq, Read, Show)
 
 withErrBuf :: (a -> Bool) -> (ErrBuf -> IO a) -> IO a
@@ -208,9 +207,8 @@ withErrBuf isError f = allocaArray (#const PCAP_ERRBUF_SIZE) $ \errPtr -> do
 -- | 'openOffline' opens a dump file for reading. The file format
 -- is the same as used by @tcpdump@ and Wireshark. The string @\"-\"@
 -- is a synonym for @stdin@.
---
-openOffline :: FilePath	-- ^ filename
-	    -> IO (ForeignPtr PcapTag)
+openOffline :: FilePath -- ^ filename
+            -> IO (ForeignPtr PcapTag)
 openOffline name =
     withCString name $ \namePtr -> do
       ptr <- withErrBuf (== nullPtr) (pcap_open_offline namePtr)
@@ -220,18 +218,18 @@ openOffline name =
 -- look at packets on the network. The arguments are the device name,
 -- the snapshot legnth (in bytes), the promiscuity of the interface
 -- ('True' == promiscuous) and a timeout in milliseconds.
--- 
+--
 -- Using @\"any\"@ as the device name will capture packets from all
 -- interfaces.  On some systems, reading from the @\"any\"@ device is
 -- incompatible with setting the interfaces into promiscuous mode. In
 -- that case, only packets whose link layer addresses match those of
 -- the interfaces are captured.
 --
-openLive :: String	-- ^ device name
-	 -> Int		-- ^ snapshot length
-	 -> Bool	-- ^ set to promiscuous mode?
-	 -> Int		-- ^ timeout in milliseconds
-	 -> IO (ForeignPtr PcapTag)
+openLive :: String -- ^ device name
+         -> Int    -- ^ snapshot length
+         -> Bool   -- ^ set to promiscuous mode?
+         -> Int    -- ^ timeout in milliseconds
+         -> IO (ForeignPtr PcapTag)
 openLive name snaplen promisc timeout =
     withCString name $ \namePtr -> do
       ptr <- withErrBuf (== nullPtr) $ pcap_open_live namePtr
@@ -243,16 +241,15 @@ openLive name snaplen promisc timeout =
 -- filter compilation by 'setFilter'. The arguments are the link type
 -- and the snapshot length.
 --
-openDead :: Link		-- ^ datalink type
-	 -> Int		-- ^ snapshot length
-	 -> IO (ForeignPtr PcapTag)	-- ^ packet capture descriptor
+openDead :: Link                    -- ^ datalink type
+         -> Int                     -- ^ snapshot length
+         -> IO (ForeignPtr PcapTag) -- ^ packet capture descriptor
 openDead link snaplen = do
     ptr <- pcap_open_dead (packLink link)
-	   (fromIntegral snaplen)
+           (fromIntegral snaplen)
     when (ptr == nullPtr) $
         ioError $ userError "Can't open dead pcap device"
     newForeignPtr ptr (pcap_close ptr)
-
 
 foreign import ccall unsafe pcap_open_offline
     :: CString   -> ErrBuf -> IO (Ptr PcapTag)
@@ -263,7 +260,6 @@ foreign import ccall unsafe pcap_open_live
 foreign import ccall unsafe pcap_open_dead
     :: CInt -> CInt -> IO (Ptr PcapTag)
 
-
 --
 -- Open a dump device
 --
@@ -272,9 +268,9 @@ foreign import ccall unsafe pcap_open_dead
 -- written to by the 'dump' function. The arguments are a raw packet
 -- capture descriptor and the file name, with \"-\" as a synonym for
 -- @stdout@.
-openDump :: Ptr PcapTag	-- ^ packet capture descriptor
-	 -> FilePath	-- ^ dump file name
-	 -> IO Pdump	-- ^ davefile descriptor
+openDump :: Ptr PcapTag -- ^ packet capture descriptor
+         -> FilePath    -- ^ dump file name
+         -> IO Pdump    -- ^ davefile descriptor
 openDump hdl name =
     withCString name $ \namePtr -> do
       ptr <- pcap_dump_open hdl namePtr >>= throwPcapIf hdl (== nullPtr)
@@ -291,50 +287,50 @@ foreign import ccall unsafe pcap_dump_close
 
 -- | Set a filter on the specified packet capture descriptor. Valid
 -- filter strings are those accepted by @tcpdump@.
-setFilter :: Ptr PcapTag	-- ^ packet capture descriptor
-	  -> String	-- ^ filter string
-	  -> Bool		-- ^ optimize?
-	  -> Word32	-- ^ IPv4 network mask
-	  -> IO ()
+setFilter :: Ptr PcapTag -- ^ packet capture descriptor
+          -> String      -- ^ filter string
+          -> Bool        -- ^ optimize?
+          -> Word32      -- ^ IPv4 network mask
+          -> IO ()
 setFilter hdl filt opt mask =
     withCString filt $ \filtstr -> do
       allocaBytes (#size struct bpf_program) $ \bpfp -> do
         pcap_compile hdl bpfp filtstr (fromBool opt) (fromIntegral mask) >>=
             throwPcapIf hdl (== -1)
-	pcap_setfilter hdl bpfp >>= throwPcapIf hdl (== -1)
-	pcap_freecode bpfp
+        pcap_setfilter hdl bpfp >>= throwPcapIf hdl (== -1)
+        pcap_freecode bpfp
 
 -- | Compile a filter for use by another program using the Berkeley
 -- Packet Filter library.
-compileFilter :: Int		-- ^ snapshot length
-	      -> Link		-- ^ datalink type
-	      -> String	-- ^ filter string
-	      -> Bool		-- ^ optimize?
-	      -> Word32	-- ^ IPv4 network mask
-	      -> IO BpfProgram
+compileFilter :: Int    -- ^ snapshot length
+              -> Link   -- ^ datalink type
+              -> String -- ^ filter string
+              -> Bool   -- ^ optimize?
+              -> Word32 -- ^ IPv4 network mask
+              -> IO BpfProgram
 compileFilter snaplen link filt opt mask =
     withCString filt $ \filtstr ->
       allocaBytes (#size struct bpf_program) $ \bpfp -> do
-	ret  <- pcap_compile_nopcap (fromIntegral snaplen)
+        ret  <- pcap_compile_nopcap (fromIntegral snaplen)
                   (packLink link)
                   bpfp
                   filtstr
                   (fromBool opt)
                   (fromIntegral mask)
-	when (ret == (-1)) $
-	    ioError $ userError "Pcap.compileFilter error"
+        when (ret == (-1)) $
+            ioError $ userError "Pcap.compileFilter error"
         newForeignPtr bpfp (pcap_freecode bpfp)
 
 foreign import ccall pcap_compile
-	:: Ptr PcapTag  -> Ptr BpfProgramTag -> CString -> CInt -> CInt
+        :: Ptr PcapTag  -> Ptr BpfProgramTag -> CString -> CInt -> CInt
         -> IO CInt
 foreign import ccall pcap_compile_nopcap
         :: CInt -> CInt -> Ptr BpfProgramTag -> CString -> CInt -> CInt
         -> IO CInt
 foreign import ccall pcap_setfilter
-	:: Ptr PcapTag  -> Ptr BpfProgramTag -> IO CInt
+        :: Ptr PcapTag  -> Ptr BpfProgramTag -> IO CInt
 foreign import ccall pcap_freecode
-	:: Ptr BpfProgramTag -> IO ()
+        :: Ptr BpfProgramTag -> IO ()
 
 --
 -- Find devices
@@ -342,7 +338,6 @@ foreign import ccall pcap_freecode
 
 newtype DevBuf = DevBuf ()
 newtype DevAddr = DevAddr ()
-
 
 -- | 'lookupDev' returns the name of a device suitable for use with
 -- 'openLive' and 'lookupNet'. If you only have one interface, it is
@@ -355,7 +350,7 @@ lookupDev = withErrBuf (== nullPtr) pcap_lookupdev >>= peekCString
 -- calling process has sufficient privileges to open, so it may not
 -- find every device on the system.
 findAllDevs :: IO [Interface]
-findAllDevs = 
+findAllDevs =
     alloca $ \dptr -> do
       withErrBuf (== -1) (pcap_findalldevs dptr)
       dbuf <- peek dptr
@@ -368,9 +363,9 @@ devs2list dbuf
     | dbuf == nullPtr = return []
     | otherwise = do
         nextdev <- (#peek struct pcap_if, next) dbuf
-	ds <- devs2list nextdev
-	d <- oneDev dbuf
-	return (d : ds)
+        ds <- devs2list nextdev
+        d <- oneDev dbuf
+        return (d : ds)
 
 oneDev :: Ptr DevBuf -> IO Interface
 oneDev dbuf = do
@@ -404,7 +399,7 @@ addrs2list abuf
 oneAddr :: Ptr DevAddr -> IO PcapAddr
 oneAddr abuf =
     let socka :: Ptr a -> IO (Maybe SockAddr)
-	socka sa | sa == nullPtr = return Nothing
+        socka sa | sa == nullPtr = return Nothing
                  | otherwise = do
 #if defined(HAVE_STRUCT_SOCKADDR_SA_LEN)
           l <- ((#peek struct sockaddr, sa_len) sa) :: IO CUChar
@@ -412,19 +407,19 @@ oneAddr abuf =
           l <- return (#size struct sockaddr) :: IO CUChar
 #endif
           f <- ((#peek struct sockaddr, sa_family) sa) :: IO CUChar
-					
+
           let off = (#offset struct sockaddr, sa_data)
               nbytes = ((fromIntegral l) - off)
           addr <- B.create nbytes $ \p ->
                   B.memcpy p (plusPtr sa off :: Ptr Word8)
                        (fromIntegral nbytes)
 
-	  return (Just (SockAddr (unpackFamily (fromIntegral f)) addr))
+          return (Just (SockAddr (unpackFamily (fromIntegral f)) addr))
     in do
       addr <- socka =<< (#peek struct pcap_addr, addr) abuf
 
       when (isNothing addr) $
-	   ioError $ userError "Pcap.oneAddr: null address"
+           ioError $ userError "Pcap.oneAddr: null address"
 
       mask <- socka =<< (#peek struct pcap_addr, netmask) abuf
       bcast <- socka =<< (#peek struct pcap_addr, broadaddr) abuf
@@ -436,12 +431,11 @@ oneAddr abuf =
                       , addrPeer = peer
                       }
 
-
 -- | Return the network address and mask for the specified interface
 -- name. Only valid for IPv4. For other protocols, use 'findAllDevs'
 -- and search the 'Interface' list for the associated network mask.
-lookupNet :: String	-- ^ device name
-	  -> IO Network
+lookupNet :: String     -- ^ device name
+          -> IO Network
 lookupNet dev = withCString dev $ \name  ->
     alloca $ \netp -> alloca $ \maskp -> do
       withErrBuf (== -1) (pcap_lookupnet name netp maskp)
@@ -451,7 +445,6 @@ lookupNet dev = withCString dev $ \name  ->
       return Network { netAddr = fromIntegral net
                      , netMask = fromIntegral mask
                      }
-
 
 foreign import ccall unsafe pcap_lookupdev
     :: CString -> IO CString
@@ -485,9 +478,9 @@ getNonBlock hdl = toBool `fmap` withErrBuf (== -1) (pcap_getnonblock hdl)
 
 -- | The direction in which packets are to be captured.  See
 -- 'setDirection'.
-data Direction = InOut          -- ^ incoming and outgoing packets (the default
-               | In             -- ^ incoming packets
-               | Out            -- ^ outgoing packets
+data Direction = InOut -- ^ incoming and outgoing packets (the default
+               | In    -- ^ incoming packets
+               | Out   -- ^ outgoing packets
                  deriving (Eq, Show, Read)
 
 -- | Specify the direction in which packets are to be captured.
@@ -524,8 +517,8 @@ foreign import ccall unsafe pcap_geterr
 
 -- | Send a raw packet through the network interface.
 sendPacket :: Ptr PcapTag
-           -> Ptr Word8         -- ^ packet data (including link-level header)
-           -> Int               -- ^ packet size
+           -> Ptr Word8 -- ^ packet data (including link-level header)
+           -> Int       -- ^ packet size
            -> IO ()
 sendPacket hdl buf size = do
     pcap_sendpacket hdl buf (fromIntegral size) >>= throwPcapIf hdl (== -1)
@@ -550,14 +543,13 @@ toPktHdr hdr = do
     return PktHdr { hdrSeconds = fromIntegral (s :: CLong)
                   , hdrUseconds = fromIntegral (us :: CLong)
                   , hdrCaptureLength = fromIntegral (caplen :: CUInt)
-	          , hdrWireLength = fromIntegral (len :: CUInt)
+                  , hdrWireLength = fromIntegral (len :: CUInt)
                   }
 
 exportCallback :: Callback -> IO (FunPtr CCallback)
 exportCallback f = exportCCallback $ \_user chdr ptr -> do
     hdr <- toPktHdr chdr
     f hdr ptr
-
 
 -- | Collect and process packets. The arguments are the packet capture
 -- descriptor, the count and a callback function.
@@ -572,10 +564,10 @@ exportCallback f = exportCCallback $ \_user chdr ptr -> do
 -- record contains the number of bytes captured, whcih can be used to
 -- marshal the data into a list or array.
 --
-dispatch :: Ptr PcapTag	-- ^ packet capture descriptor
-	 -> Int		-- ^ number of packets to process
-	 -> Callback	-- ^ packet processing function
-	 -> IO Int	-- ^ number of packets read
+dispatch :: Ptr PcapTag -- ^ packet capture descriptor
+         -> Int         -- ^ number of packets to process
+         -> Callback    -- ^ packet processing function
+         -> IO Int      -- ^ number of packets read
 dispatch hdl count f = do
     handler <- exportCallback f
     result  <- pcap_dispatch hdl (fromIntegral count) handler nullPtr
@@ -587,13 +579,13 @@ dispatch hdl count f = do
 -- | Similar to 'dispatch', but loop until the number of packets
 -- specified by the second argument are read. A negative value loops
 -- forever.
--- 
+--
 -- This function does not return when a live read tiemout occurs. Use
 -- 'dispatch' instead if you wnat to specify a timeout.
-loop :: Ptr PcapTag	-- ^ packet capture descriptor
-     -> Int		-- ^ number of packet to read
-     -> Callback	-- ^ packet processing function
-     -> IO Int	-- ^ number of packets read
+loop :: Ptr PcapTag -- ^ packet capture descriptor
+     -> Int         -- ^ number of packet to read
+     -> Callback    -- ^ packet processing function
+     -> IO Int      -- ^ number of packets read
 loop hdl count f = do
     handler <- exportCallback f
     result  <- pcap_loop hdl (fromIntegral count) handler nullPtr
@@ -604,8 +596,8 @@ loop hdl count f = do
 
 -- | Read the next packet (equivalent to calling 'dispatch' with a
 -- count of 1).
-next :: Ptr PcapTag			-- ^ packet capture descriptor
-     -> IO (PktHdr, Ptr Word8)	-- ^ packet header and data of the next packet
+next :: Ptr PcapTag            -- ^ packet capture descriptor
+     -> IO (PktHdr, Ptr Word8) -- ^ packet header and data of the next packet
 next hdl =
     allocaBytes (#size struct pcap_pkthdr) $ \chdr -> do
       ptr <- pcap_next hdl chdr
@@ -618,9 +610,9 @@ next hdl =
 -- | Write the packet data given by the second and third arguments to
 -- a dump file opened by 'openDead'. 'dump' is designed so it can be
 -- easily used as a default callback function by 'dispatch' or 'loop'.
-dump :: Ptr PcapDumpTag	-- ^ dump file descriptor
-     -> Ptr PktHdr		-- ^ packet header record
-     -> Ptr Word8		-- ^ packet data
+dump :: Ptr PcapDumpTag -- ^ dump file descriptor
+     -> Ptr PktHdr      -- ^ packet header record
+     -> Ptr Word8       -- ^ packet data
      -> IO ()
 dump hdl hdr pkt = pcap_dump hdl hdr pkt
 
@@ -634,8 +626,7 @@ foreign import ccall pcap_loop
 foreign import ccall pcap_next
         :: Ptr PcapTag -> Ptr PktHdr -> IO (Ptr Word8)
 foreign import ccall pcap_dump
-	:: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
-
+        :: Ptr PcapDumpTag -> Ptr PktHdr -> Ptr Word8 -> IO ()
 
 --
 -- Datalink manipulation
@@ -646,7 +637,6 @@ foreign import ccall pcap_dump
 --
 datalink :: Ptr PcapTag -> IO Link
 datalink hdl = unpackLink `fmap` pcap_datalink hdl
-
 
 -- | Sets the datalink type for a given pcap descriptor.
 --
@@ -666,7 +656,7 @@ listDatalinks hdl =
       dls <- peekArray (fromIntegral (ret :: CInt)) dlbuf
       free dlbuf
       return (map unpackLink dls)
-		
+
 foreign import ccall unsafe pcap_datalink
     :: Ptr PcapTag -> IO CInt
 foreign import ccall unsafe pcap_set_datalink
@@ -709,8 +699,7 @@ version hdl = do
 -- | 'isSwapped' returns 'True' if the current dump file uses a
 -- different byte order than the one native to the system.
 isSwapped :: Ptr PcapTag -> IO Bool
-isSwapped hdl = toBool `fmap`  pcap_is_swapped hdl
-
+isSwapped hdl = toBool `fmap` pcap_is_swapped hdl
 
 -- | The snapshot length that was used in the call to 'openLive'.
 snapshotLen :: Ptr PcapTag -> IO Int
@@ -734,244 +723,244 @@ foreign import ccall pcap_snapshot
 --   This covers all of the datalink types defined in bpf.h.
 --   Types defined on your system may vary.
 --
-data Link 
-	= DLT_NULL		-- ^ no link layer encapsulation
-        | DLT_UNKNOWN Int       -- ^ unknown encapsulation
+data Link
+    = DLT_NULL                          -- ^ no link layer encapsulation
+    | DLT_UNKNOWN Int                   -- ^ unknown encapsulation
 #ifdef DLT_EN10MB
-	| DLT_EN10MB		-- ^ 10 Mbit per second (or faster) ethernet
+    | DLT_EN10MB                        -- ^ 10 Mbit per second (or faster) ethernet
 #endif
 #ifdef DLT_EN3MB
-	| DLT_EN3MB		-- ^ original 3 Mbit per second ethernet
+    | DLT_EN3MB                         -- ^ original 3 Mbit per second ethernet
 #endif
 #ifdef DLT_AX25
-	| DLT_AX25		-- ^ amateur radio AX.25
+    | DLT_AX25                          -- ^ amateur radio AX.25
 #endif
 #ifdef DLT_PRONET
-	| DLT_PRONET		-- ^ Proteon ProNET Token Ring
+    | DLT_PRONET                        -- ^ Proteon ProNET Token Ring
 #endif
 #ifdef DLT_CHAOS
-	| DLT_CHAOS		-- ^ Chaos
+    | DLT_CHAOS                         -- ^ Chaos
 #endif
 #ifdef DLT_IEEE802
-	| DLT_IEEE802		-- ^ IEEE 802 networks
+    | DLT_IEEE802                       -- ^ IEEE 802 networks
 #endif
 #ifdef DLT_ARCNET
-	| DLT_ARCNET		-- ^ ARCNET
+    | DLT_ARCNET                        -- ^ ARCNET
 #endif
 #ifdef DLT_SLIP
-	| DLT_SLIP		-- ^ Serial line IP
+    | DLT_SLIP                          -- ^ Serial line IP
 #endif
 #ifdef DLT_PPP
-	| DLT_PPP		-- ^ Point-to-point protocol
+    | DLT_PPP                           -- ^ Point-to-point protocol
 #endif
 #ifdef DLT_FDDI
-	| DLT_FDDI		-- ^ FDDI
+    | DLT_FDDI                          -- ^ FDDI
 #endif
 #ifdef DLT_ATM_RFC1483
-	| DLT_ATM_RFC1483	-- ^ LLC SNAP encapsulated ATM
+    | DLT_ATM_RFC1483                   -- ^ LLC SNAP encapsulated ATM
 #endif
 #ifdef DLT_RAW
-	| DLT_RAW		-- ^ raw IP
+    | DLT_RAW                           -- ^ raw IP
 #endif
 #ifdef DLT_SLIP_BSDOS
-	| DLT_SLIP_BSDOS	-- ^ BSD OS serial line IP
+    | DLT_SLIP_BSDOS                    -- ^ BSD OS serial line IP
 #endif
 #ifdef DLT_PPP_BSDOS
-	| DLT_PPP_BSDOS		-- ^ BSD OS point-to-point protocol
+    | DLT_PPP_BSDOS                     -- ^ BSD OS point-to-point protocol
 #endif
 #ifdef DLT_ATM_CLIP
-	| DLT_ATM_CLIP		-- ^ Linux classical IP over ATM
+    | DLT_ATM_CLIP                      -- ^ Linux classical IP over ATM
 #endif
 #ifdef DLT_REDBACK_SMARTEDGE
-	| DLT_REDBACK_SMARTEDGE -- ^ Redback SmartEdge 400\/800
+    | DLT_REDBACK_SMARTEDGE             -- ^ Redback SmartEdge 400\/800
 #endif
 #ifdef DLT_PPP_SERIAL
-	| DLT_PPP_SERIAL	-- ^ PPP over serial with HDLC encapsulation
+    | DLT_PPP_SERIAL                    -- ^ PPP over serial with HDLC encapsulation
 #endif
 #ifdef DLT_PPP_ETHER
-	| DLT_PPP_ETHER		-- ^ PPP over ethernet
+    | DLT_PPP_ETHER                     -- ^ PPP over ethernet
 #endif
 #ifdef DLT_SYMANTEC_FIREWALL
-	| DLT_SYMANTEC_FIREWALL -- ^ Symantec Enterprise Firewall
+    | DLT_SYMANTEC_FIREWALL             -- ^ Symantec Enterprise Firewall
 #endif
-#ifdef DLT_C_HDLC		
-	| DLT_C_HDLC		-- ^ Cisco HDLC
+#ifdef DLT_C_HDLC
+    | DLT_C_HDLC                        -- ^ Cisco HDLC
 #endif
 #ifdef DLT_IEEE802_11
-	| DLT_IEEE802_11	-- ^ IEEE 802.11 wireless
+    | DLT_IEEE802_11                    -- ^ IEEE 802.11 wireless
 #endif
 #ifdef DLT_FRELAY
-	| DLT_FRELAY            -- ^ Frame Relay
+    | DLT_FRELAY                        -- ^ Frame Relay
 #endif
 #ifdef DLT_LOOP
-	| DLT_LOOP		-- ^ OpenBSD loopback device
+    | DLT_LOOP                          -- ^ OpenBSD loopback device
 #endif
 #ifdef DLT_ENC
-	| DLT_ENC		-- ^ Encapsulated packets for IPsec
+    | DLT_ENC                           -- ^ Encapsulated packets for IPsec
 #endif
 #ifdef DLT_LINUX_SLL
-	| DLT_LINUX_SLL		-- ^ Linux cooked sockets
+    | DLT_LINUX_SLL                     -- ^ Linux cooked sockets
 #endif
 #ifdef DLT_LTALK
-	| DLT_LTALK		-- ^ Apple LocalTalk
+    | DLT_LTALK                         -- ^ Apple LocalTalk
 #endif
 #ifdef DLT_ECONET
-	| DLT_ECONET		-- ^ Acorn Econet
+    | DLT_ECONET                        -- ^ Acorn Econet
 #endif
 #ifdef DLT_IPFILTER
-	| DLT_IPFILTER		-- ^ OpenBSD's old ipfilter
+    | DLT_IPFILTER                      -- ^ OpenBSD's old ipfilter
 #endif
 #ifdef DLT_PFLOG
-	| DLT_PFLOG		-- ^ OpenBSD's pflog
+    | DLT_PFLOG                         -- ^ OpenBSD's pflog
 #endif
 #ifdef DLT_CISCO_IOS
-	| DLT_CISCO_IOS		-- ^ Cisco IOS
+    | DLT_CISCO_IOS                     -- ^ Cisco IOS
 #endif
 #ifdef DLT_PRISM_HEADER
-	| DLT_PRISM_HEADER	-- ^ Intersil Prism II wireless chips
+    | DLT_PRISM_HEADER                  -- ^ Intersil Prism II wireless chips
 #endif
 #ifdef DLT_AIRONET_HEADER
-	| DLT_AIRONET_HEADER	-- ^ Aironet (Cisco) 802.11 wireless
+    | DLT_AIRONET_HEADER                -- ^ Aironet (Cisco) 802.11 wireless
 #endif
 #ifdef DLT_HHDLC
-	| DLT_HHDLC             -- ^ Siemens HiPath HDLC
+    | DLT_HHDLC                         -- ^ Siemens HiPath HDLC
 #endif
 #ifdef DLT_IP_OVER_FC
-	| DLT_IP_OVER_FC        -- ^ RFC 2625 IP-over-Fibre Channel
+    | DLT_IP_OVER_FC                    -- ^ RFC 2625 IP-over-Fibre Channel
 #endif
 #ifdef DLT_SUNATM
-	| DLT_SUNATM            -- ^ Full Frontal ATM on Solaris with SunATM
+    | DLT_SUNATM                        -- ^ Full Frontal ATM on Solaris with SunATM
 #endif
 #ifdef DLT_IEEE802_11_RADIO
-	| DLT_IEEE802_11_RADIO -- ^ 802.11 plus a number of bits of link-layer information
+    | DLT_IEEE802_11_RADIO              -- ^ 802.11 plus a number of bits of link-layer information
 #endif
 #ifdef DLT_ARCNET_LINUX
-	| DLT_ARCNET_LINUX -- ^ Linux ARCNET header
+    | DLT_ARCNET_LINUX                  -- ^ Linux ARCNET header
 #endif
 #ifdef DLT_APPLE_IP_OVER_IEEE1394
-	| DLT_APPLE_IP_OVER_IEEE1394 -- ^ Apple IP-over-IEEE 1394
+    | DLT_APPLE_IP_OVER_IEEE1394        -- ^ Apple IP-over-IEEE 1394
 #endif
 #ifdef DLT_MTP2_WITH_PHDR
-	| DLT_MTP2_WITH_PHDR -- ^ SS7, C7 MTP2 with pseudo-header
+    | DLT_MTP2_WITH_PHDR                -- ^ SS7, C7 MTP2 with pseudo-header
 #endif
 #ifdef DLT_MTP2
-	| DLT_MTP2 -- ^ SS7, C7 Message Transfer Part 2 (MPT2)
+    | DLT_MTP2                          -- ^ SS7, C7 Message Transfer Part 2 (MPT2)
 #endif
 #ifdef DLT_MTP3
-	| DLT_MTP3 -- ^ SS7, C7 Message Transfer Part 3 (MPT3)
+    | DLT_MTP3                          -- ^ SS7, C7 Message Transfer Part 3 (MPT3)
 #endif
 #ifdef DLT_SCCP
-	| DLT_SCCP -- ^ SS7, C7 SCCP
+    | DLT_SCCP                          -- ^ SS7, C7 SCCP
 #endif
 #ifdef DLT_DOCSIS
-	| DLT_DOCSIS -- ^ DOCSIS MAC frame
+    | DLT_DOCSIS                        -- ^ DOCSIS MAC frame
 #endif
 #ifdef DLT_LINUX_IRDA
-	| DLT_LINUX_IRDA -- ^ Linux IrDA packet
+    | DLT_LINUX_IRDA                    -- ^ Linux IrDA packet
 #endif
 #ifdef DLT_USER0
-	| DLT_USER0 -- ^ Reserved for private use
+    | DLT_USER0                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER1
-	| DLT_USER1 -- ^ Reserved for private use
+    | DLT_USER1                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER2
-	| DLT_USER2 -- ^ Reserved for private use
+    | DLT_USER2                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER3
-	| DLT_USER3 -- ^ Reserved for private use
+    | DLT_USER3                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER4
-	| DLT_USER4 -- ^ Reserved for private use
+    | DLT_USER4                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER5
-	| DLT_USER5 -- ^ Reserved for private use
+    | DLT_USER5                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER6
-	| DLT_USER6 -- ^ Reserved for private use
+    | DLT_USER6                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER7
-	| DLT_USER7 -- ^ Reserved for private use
+    | DLT_USER7                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER8
-	| DLT_USER8 -- ^ Reserved for private use
+    | DLT_USER8                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER9
-	| DLT_USER9 -- ^ Reserved for private use
+    | DLT_USER9                         -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER10
-	| DLT_USER10 -- ^ Reserved for private use
+    | DLT_USER10                        -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER11
-	| DLT_USER11 -- ^ Reserved for private use
+    | DLT_USER11                        -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER12
-	| DLT_USER12 -- ^ Reserved for private use
+    | DLT_USER12                        -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER13
-	| DLT_USER13 -- ^ Reserved for private use
+    | DLT_USER13                        -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER14
-	| DLT_USER14 -- ^ Reserved for private use
+    | DLT_USER14                        -- ^ Reserved for private use
 #endif
 #ifdef DLT_USER15
-	| DLT_USER15 -- ^ Reserved for private use
+    | DLT_USER15                        -- ^ Reserved for private use
 #endif
 #ifdef DLT_PPP_PPPD
-	| DLT_PPP_PPPD -- ^ Outgoing packets for ppp daemon
+    | DLT_PPP_PPPD                      -- ^ Outgoing packets for ppp daemon
 #endif
 #ifdef DLT_GPRS_LLC
-	| DLT_GPRS_LLC -- ^ GPRS LLC
+    | DLT_GPRS_LLC                      -- ^ GPRS LLC
 #endif
 #ifdef DLT_GPF_T
-	| DLT_GPF_T -- ^ GPF-T (ITU-T G.7041\/Y.1303)
+    | DLT_GPF_T                         -- ^ GPF-T (ITU-T G.7041\/Y.1303)
 #endif
 #ifdef DLT_GPF_F
-	| DLT_GPF_F -- ^ GPF-F (ITU-T G.7041\/Y.1303)
+    | DLT_GPF_F                         -- ^ GPF-F (ITU-T G.7041\/Y.1303)
 #endif
 #ifdef DLT_LINUX_LAPD
-	| DLT_LINUX_LAPD -- ^ Raw LAPD for vISDN (/not/ generic LAPD)
+    | DLT_LINUX_LAPD                    -- ^ Raw LAPD for vISDN (/not/ generic LAPD)
 #endif
 #ifdef DLT_A429
-	| DLT_A429 -- ^ ARINC 429
+    | DLT_A429                          -- ^ ARINC 429
 #endif
 #ifdef DLT_A653_ICM
-	| DLT_A653_ICM -- ^ ARINC 653 Interpartition Communication messages
+    | DLT_A653_ICM                      -- ^ ARINC 653 Interpartition Communication messages
 #endif
 #ifdef DLT_USB
-	| DLT_USB -- ^ USB packet
+    | DLT_USB                           -- ^ USB packet
 #endif
 #ifdef DLT_BLUETOOTH_HCI_H4
-	| DLT_BLUETOOTH_HCI_H4 -- ^ Bluetooth HCI UART transport layer (part H:4)
+    | DLT_BLUETOOTH_HCI_H4              -- ^ Bluetooth HCI UART transport layer (part H:4)
 #endif
 #ifdef DLT_MFR
-	| DLT_MFR               -- ^ Multi Link Frame Relay (FRF.16)
+    | DLT_MFR                           -- ^ Multi Link Frame Relay (FRF.16)
 #endif
 #ifdef DLT_IEEE802_16_MAC_CPS
-       | DLT_IEEE802_16_MAC_CPS -- ^ IEEE 802.16 MAC Common Part Sublayer
+    | DLT_IEEE802_16_MAC_CPS            -- ^ IEEE 802.16 MAC Common Part Sublayer
 #endif
 #ifdef DLT_USB_LINUX
-       | DLT_USB_LINUX -- ^ USB packets, beginning with a Linux USB header
+    | DLT_USB_LINUX                     -- ^ USB packets, beginning with a Linux USB header
 #endif
 #ifdef DLT_CAN20B
-       | DLT_CAN20B -- ^ Controller Area Network (CAN) v2.0B
+    | DLT_CAN20B                        -- ^ Controller Area Network (CAN) v2.0B
 #endif
 #ifdef DLT_IEEE802_15_4_LINUX
-       | DLT_IEEE802_15_4_LINUX -- ^ IEEE 802.15.4, with address fields padded
+    | DLT_IEEE802_15_4_LINUX            -- ^ IEEE 802.15.4, with address fields padded
 #endif
 #ifdef DLT_PPI
-       | DLT_PPI -- ^ Per Packet Information encapsulated packets
+    | DLT_PPI                           -- ^ Per Packet Information encapsulated packets
 #endif
 #ifdef DLT_IEEE802_16_MAC_CPS_RADIO
-       | DLT_IEEE802_16_MAC_CPS_RADIO -- ^ 802.16 MAC Common Part Sublayer with radiotap radio header
+    | DLT_IEEE802_16_MAC_CPS_RADIO      -- ^ 802.16 MAC Common Part Sublayer with radiotap radio header
 #endif
 #ifdef DLT_IEEE802_15_4
-       | DLT_IEEE802_15_4 -- ^ IEEE 802.15.4, exactly as in the spec
+    | DLT_IEEE802_15_4                  -- ^ IEEE 802.15.4, exactly as in the spec
 #endif
 #ifdef DLT_PFSYNC
-       | DLT_PFSYNC
+    | DLT_PFSYNC
 #endif
-	deriving (Eq, Ord, Read, Show)
+    deriving (Eq, Ord, Read, Show)
 
 packLink :: Link -> CInt
 packLink l = case l of
