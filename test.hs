@@ -1,14 +1,15 @@
 module Main where
 
-import Pcap
 import Foreign
+import Network.Pcap.Base
 
-main =
-   do
-      let printIt :: PktHdr -> Ptr Word8 -> IO ()
-          printIt ph bytep =
-             do a <- peekArray (fromIntegral (caplen ph)) bytep
-                print a
-      p <- openLive "eth0" 100 True 10000
-      s <- withForeignPtr p (\ptr -> do dispatch ptr (-1) printIt)
-      return ()
+main :: IO ()
+main = do
+    p <- openLive "eth0" 100 True 10000
+    withForeignPtr p $ \ptr ->
+      dispatch ptr (-1) printIt
+    return ()
+
+printIt :: PktHdr -> Ptr Word8 -> IO ()
+printIt ph bytep =
+    peekArray (fromIntegral (hdrCaptureLength ph)) bytep >>= print

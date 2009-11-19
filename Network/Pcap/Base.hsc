@@ -20,19 +20,19 @@
 -- 'peekArray' to convert the captured data to a list.  For
 -- illustration:
 --
--- >    import Network.Pcap.Base
--- >    import Foreign.Marshal.Array (peekArray)
+-- > import Foreign
+-- > import Network.Pcap.Base
 -- >
--- >    main = do
--- >        let printIt :: PktHdr -> Ptr Word8 -> IO ()
--- >            printIt ph bytep = do
--- >              a <- peekArray (fromIntegral (hdrCaptureLength ph)) bytep
--- >              print a
+-- > main :: IO ()
+-- > main = do
+-- >     p <- openLive "eth0" 100 True 10000
+-- >     withForeignPtr p $ \ptr ->
+-- >       dispatch ptr (-1) printIt
+-- >     return ()
 -- >
--- >        p <- openLive "em0" 100 True 10000
--- >        s <- withForeignPtr p $ \ptr -> do
--- >               dispatch ptr (-1) printIt
--- >        return ()
+-- > printIt :: PktHdr -> Ptr Word8 -> IO ()
+-- > printIt ph bytep =
+-- >     peekArray (fromIntegral (hdrCaptureLength ph)) bytep >>= print
 --
 -- Note that the 'SockAddr' exported here is not the @SockAddr@ from
 -- 'Network.Socket'. The @SockAddr@ from 'Network.Socket' corresponds
