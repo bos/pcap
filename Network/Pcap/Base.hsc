@@ -216,7 +216,7 @@ openOffline name =
 
 -- | 'openLive' is used to get a packet descriptor that can be used to
 -- look at packets on the network. The arguments are the device name,
--- the snapshot legnth (in bytes), the promiscuity of the interface
+-- the snapshot length (in bytes), the promiscuity of the interface
 -- ('True' == promiscuous) and a timeout in milliseconds.
 --
 -- Using @\"any\"@ as the device name will capture packets from all
@@ -270,7 +270,7 @@ foreign import ccall unsafe pcap_open_dead
 -- @stdout@.
 openDump :: Ptr PcapTag -- ^ packet capture descriptor
          -> FilePath    -- ^ dump file name
-         -> IO Pdump    -- ^ davefile descriptor
+         -> IO Pdump    -- ^ savefile descriptor
 openDump hdl name =
     withCString name $ \namePtr -> do
       ptr <- pcap_dump_open hdl namePtr >>= throwPcapIf hdl (== nullPtr)
@@ -461,7 +461,7 @@ foreign import ccall unsafe pcap_lookupnet
 
 -- | Set a packet capture descriptor into non-blocking mode if the
 -- second argument is 'True', otherwise put it in blocking mode. Note
--- that the packet capture descriptor must have been obtaine from
+-- that the packet capture descriptor must have been obtained from
 -- 'openLive'.
 --
 setNonBlock :: Ptr PcapTag -> Bool -> IO ()
@@ -560,8 +560,8 @@ exportCallback f = exportCCallback $ \_user chdr ptr -> do
 -- dump file (if offline).
 --
 -- The callback function is passed two arguments, a packet header
--- record and a pointer to the packet data (@Ptr Word8@). THe header
--- record contains the number of bytes captured, whcih can be used to
+-- record and a pointer to the packet data (@Ptr Word8@). The header
+-- record contains the number of bytes captured, which can be used to
 -- marshal the data into a list or array.
 --
 dispatch :: Ptr PcapTag -- ^ packet capture descriptor
@@ -580,8 +580,8 @@ dispatch hdl count f = do
 -- specified by the second argument are read. A negative value loops
 -- forever.
 --
--- This function does not return when a live read tiemout occurs. Use
--- 'dispatch' instead if you wnat to specify a timeout.
+-- This function does not return when a live read timeout occurs. Use
+-- 'dispatch' instead if you want to specify a timeout.
 loop :: Ptr PcapTag -- ^ packet capture descriptor
      -> Int         -- ^ number of packet to read
      -> Callback    -- ^ packet processing function

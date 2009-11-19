@@ -269,7 +269,7 @@ wrapBS f hdr ptr = do
 --
 -- The callback function is passed two arguments, a packet header
 -- record and a pointer to the packet data (@Ptr Word8@). THe header
--- record contains the number of bytes captured, whcih can be used to
+-- record contains the number of bytes captured, which can be used to
 -- marshal the data into a list, array, or 'B.ByteString' (using
 -- 'toBS').
 --
@@ -290,8 +290,8 @@ dispatchBS pch count f = withPcap pch $ \hdl -> P.dispatch hdl count (wrapBS f)
 -- specified by the second argument are read. A negative value loops
 -- forever.
 --
--- This function does not return when a live read tiemout occurs. Use
--- 'dispatch' instead if you wnat to specify a timeout.
+-- This function does not return when a live read timeout occurs. Use
+-- 'dispatch' instead if you want to specify a timeout.
 loop :: PcapHandle
      -> Int                     -- ^ number of packets to read (-1 == loop forever)
      -> Callback                -- ^ packet processing function
