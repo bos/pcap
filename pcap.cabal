@@ -38,3 +38,7 @@ library
   include-dirs:    include
   includes:        pcapconfig.h pcap.h
   install-includes: pcapconfig.h
+
+source-repository head
+  type:     darcs
+  location: http://darcs.serpentine.com/pcap
