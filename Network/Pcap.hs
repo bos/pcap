@@ -122,22 +122,22 @@ import Network.Pcap.Base (BpfProgram, Callback, Interface(..), Link(..),
                           PcapAddr(..), PktHdr(..), SockAddr(..), Statistics,
                           compileFilter, findAllDevs, lookupDev, lookupNet)
 
--- | packet capture handle
-newtype PcapHandle  = PcapHandle (ForeignPtr P.PcapTag)
+-- | Packet capture handle.
+newtype PcapHandle = PcapHandle (ForeignPtr P.PcapTag)
 
--- | dump file handle
+-- | Dump file handle.
 newtype DumpHandle = DumpHandle (ForeignPtr P.PcapDumpTag)
 
--- | callback using 'B.ByteString' for packet body
+-- | Callback using 'B.ByteString' for packet body.
 type CallbackBS = PktHdr -> B.ByteString -> IO ()
 
 --
 -- Open a device
 --
 
--- | 'openOffline' opens a dump file for reading. The file format
--- is the same as used by @tcpdump@ and Wireshark. The string @\"-\"@
--- is a synonym for @stdin@.
+-- | 'openOffline' opens a dump file for reading. The file format is
+-- the same as used by @tcpdump@ and Wireshark. The string @\"-\"@ is
+-- a synonym for @stdin@.
 --
 openOffline :: FilePath -- ^ name of dump file to read
             -> IO PcapHandle
@@ -203,8 +203,8 @@ openDump pch name = withPcap pch $ \hdl ->
 -- Set the filter
 --
 
--- | Set a filter on the specified packet capture handle. Valid
--- filter strings are those accepted by @tcpdump@.
+-- | Set a filter on the specified packet capture handle. Valid filter
+-- strings are those accepted by @tcpdump@.
 setFilter :: PcapHandle         -- ^ handle on which to set filter
           -> String             -- ^ filter string
           -> Bool               -- ^ optimize?
@@ -239,7 +239,8 @@ setDirection :: PcapHandle -> Direction -> IO ()
 setDirection pch dir = withPcap pch $ \hdl -> P.setDirection hdl dir
 
 {-# INLINE hdrTime #-}
--- | Get the timestamp of a packet as a single quantity, in microseconds.
+-- | Get the timestamp of a packet as a single quantity, in
+-- microseconds.
 hdrTime :: PktHdr -> Int64
 hdrTime pkt = fromIntegral (hdrSeconds pkt) * 1000000 +
               fromIntegral (hdrUseconds pkt)
@@ -264,8 +265,8 @@ wrapBS f hdr ptr = do
 --
 -- The count is the maximum number of packets to process before
 -- returning.  A count of -1 means process all of the packets received
--- in one buffer (if a live capture) or all of the packets in a
--- dump file (if offline).
+-- in one buffer (if a live capture) or all of the packets in a dump
+-- file (if offline).
 --
 -- The callback function is passed two arguments, a packet header
 -- record and a pointer to the packet data (@Ptr Word8@). THe header

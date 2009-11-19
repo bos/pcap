@@ -136,14 +136,16 @@ import System.IO.Error (userError)
 #include <sys/socket.h>
 
 newtype BpfProgramTag = BpfProgramTag ()
--- | Compiled Berkeley Packet Filter program
+
+-- | Compiled Berkeley Packet Filter program.
 type BpfProgram = ForeignPtr BpfProgramTag
 
 newtype PcapTag = PcapTag ()
--- | packet capture descriptor
 
+-- | Packet capture descriptor.
 newtype PcapDumpTag = PcapDumpTag ()
--- | dump file descriptor
+
+-- | Dump file descriptor.
 type Pdump = ForeignPtr PcapDumpTag
 
 data PktHdr = PktHdr {
@@ -191,7 +193,7 @@ data SockAddr = SockAddr {
     } deriving (Eq, Read, Show)
 
 -- | The network address record. Both the address and mask are in
---   network byte order.
+-- network byte order.
 data Network = Network {
       netAddr :: {-# UNPACK #-} !Word32 -- ^ IPv4 network address
     , netMask :: {-# UNPACK #-} !Word32 -- ^ IPv4 netmask
@@ -204,9 +206,9 @@ withErrBuf isError f = allocaArray (#const PCAP_ERRBUF_SIZE) $ \errPtr -> do
       then peekCString errPtr >>= ioError . userError
       else return ret
 
--- | 'openOffline' opens a dump file for reading. The file format
--- is the same as used by @tcpdump@ and Wireshark. The string @\"-\"@
--- is a synonym for @stdin@.
+-- | 'openOffline' opens a dump file for reading. The file format is
+-- the same as used by @tcpdump@ and Wireshark. The string @\"-\"@ is
+-- a synonym for @stdin@.
 openOffline :: FilePath -- ^ filename
             -> IO (ForeignPtr PcapTag)
 openOffline name =
@@ -478,7 +480,7 @@ getNonBlock hdl = toBool `fmap` withErrBuf (== -1) (pcap_getnonblock hdl)
 
 -- | The direction in which packets are to be captured.  See
 -- 'setDirection'.
-data Direction = InOut -- ^ incoming and outgoing packets (the default
+data Direction = InOut -- ^ incoming and outgoing packets (the default)
                | In    -- ^ incoming packets
                | Out   -- ^ outgoing packets
                  deriving (Eq, Show, Read)
@@ -556,8 +558,8 @@ exportCallback f = exportCCallback $ \_user chdr ptr -> do
 --
 -- The count is the maximum number of packets to process before
 -- returning.  A count of -1 means process all of the packets received
--- in one buffer (if a live capture) or all of the packets in a
--- dump file (if offline).
+-- in one buffer (if a live capture) or all of the packets in a dump
+-- file (if offline).
 --
 -- The callback function is passed two arguments, a packet header
 -- record and a pointer to the packet data (@Ptr Word8@). The header
@@ -645,8 +647,8 @@ setDatalink hdl link = do
     pcap_set_datalink hdl (packLink link) >>= throwPcapIf hdl (== -1)
     return ()
 
--- | List all the datalink types supported by a pcap
--- descriptor. Entries from the resulting list are valid arguments to
+-- | List all the datalink types supported by a pcap descriptor.
+-- Entries from the resulting list are valid arguments to
 -- 'setDatalink'.
 listDatalinks :: Ptr PcapTag -> IO [Link]
 listDatalinks hdl =
@@ -720,8 +722,8 @@ foreign import ccall pcap_snapshot
 
 -- | Datalink types.
 --
---   This covers all of the datalink types defined in bpf.h.
---   Types defined on your system may vary.
+--   This covers all of the datalink types defined in bpf.h.  Types
+--   defined on your system may vary.
 --
 data Link
     = DLT_NULL                          -- ^ no link layer encapsulation
