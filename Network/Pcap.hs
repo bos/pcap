@@ -181,11 +181,11 @@ openDead link snaplen = PcapHandle `fmap` P.openDead link snaplen
 
 {-# INLINE withPcap #-}
 withPcap :: PcapHandle -> (Ptr P.PcapTag -> IO a) -> IO a
-withPcap (PcapHandle hdl) f = withForeignPtr hdl f
+withPcap (PcapHandle hdl) = withForeignPtr hdl
 
 {-# INLINE withDump #-}
 withDump :: DumpHandle -> (Ptr P.PcapDumpTag -> IO a) -> IO a
-withDump (DumpHandle hdl) f = withForeignPtr hdl f
+withDump (DumpHandle hdl) = withForeignPtr hdl
 
 --
 -- Open a dump device
@@ -351,7 +351,7 @@ dumpBS :: DumpHandle
        -> IO ()
 dumpBS dh hdr s =
     withDump dh $ \hdl ->
-        BU.unsafeUseAsCString s $ \buf -> P.dump hdl hdr (castPtr buf)
+        BU.unsafeUseAsCString s $ P.dump hdl hdr . castPtr
 
 --
 -- Datalink manipulation
