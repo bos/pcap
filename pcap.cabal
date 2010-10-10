@@ -1,13 +1,15 @@
 name:            pcap
-version:         0.4.5
+version:         0.4.5.1
 license:         BSD3
 license-file:    LICENSE
 synopsis:        A system-independent interface for user-level packet capture
 description:     A system-independent interface for user-level packet capture
 maintainer:      Bryan O'Sullivan <bos@serpentine.com>
 author:          Bryan O'Sullivan, Nick Burlett, Dominic Steinitz, Gregory Wright (original author)
+homepage:        http://bitbucket.org/bos/pcap
+bug-reports:     http://bitbucket.org/bos/pcap/issues
 category:        Network
-cabal-version:   >= 1.4
+cabal-version:   >= 1.6
 extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
                  pcap.buildinfo.in
@@ -40,5 +42,5 @@ library
   install-includes: pcapconfig.h
 
 source-repository head
-  type:     darcs
-  location: http://darcs.serpentine.com/pcap
+  type:     mercurial
+  location: http://bitbucket.org/bos/pcap
