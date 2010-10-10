@@ -1,4 +1,10 @@
-AC_INIT([Pcap],[0.3.2],[bos@serpentine.com], [pcap])
+AC_INIT([Pcap],[0.4.5.1],[bos@serpentine.com], [pcap])
+
+AC_ARG_WITH(compiler,
+  [AS_HELP_STRING([--with-compiler],
+    [use the given Haskell compiler])],
+  compiler="$withval",
+  compiler=ghc)dnl
 
 AC_CONFIG_HEADER(include/pcapconfig.h)
 
