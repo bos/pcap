@@ -16,22 +16,11 @@ extra-source-files:
 extra-tmp-files: config.log config.status
 build-type:      Configure
 
-flag bytestring-in-base
-  description: bytestring was part of the base library in ghc-6.6
-               days. The bytestring low level interface is in
-               Data.ByteString.Internal and Data.Bytestring.Unsafe not
-               Data.ByteString.Base
-
-
 library
-  if flag(bytestring-in-base)
-    -- bytestring was in base-2.0 and 2.1.1
-    build-depends: base >= 2.0 && < 2.2
-    cpp-options:   -DBYTESTRING_IN_BASE
-  else
-    build-depends: base < 2.0 || >= 2.2, bytestring >= 0.9
+  build-depends: base < 5, bytestring == 0.9.*, network, time
+  if impl(ghc >= 6.10)
+    build-depends: base >= 4
 
-  build-depends:   haskell98, network, time
   exposed-modules: Network.Pcap.Base
                    Network.Pcap
   extensions:      ForeignFunctionInterface, CPP
