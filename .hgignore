@@ -1,7 +1,9 @@
 ^autom4te.cache$
 ^configure$
+^config.status$
 ^dist$
-^include/pcapconfig.h.in$
+^include/pcapconfig.h
+^pcap.buildinfo$
 \.(?:aux|eventlog|h[ip]|log|[oa]|orig|prof|ps|swp)$
 ~$
 syntax: glob
