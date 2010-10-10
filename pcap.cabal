@@ -12,7 +12,7 @@ category:        Network
 cabal-version:   >= 1.6
 extra-source-files:
                  configure.ac configure include/pcapconfig.h.in
-                 pcap.buildinfo.in
+                 pcap.buildinfo.in README.markdown
 extra-tmp-files: config.log config.status
 build-type:      Configure
 
