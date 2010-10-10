@@ -187,7 +187,7 @@ data PcapAddr = PcapAddr {
 -- @struct sockaddr_in@. This is the real @struct sockaddr@ from the
 -- BSD network stack.)
 data SockAddr = SockAddr {
-      saFamily  :: {-# UNPACK #-} !Family       -- ^ an address family exported by Network.Socket
+      saFamily  :: !Family       -- ^ an address family exported by Network.Socket
     , saAddr    :: {-# UNPACK #-} !B.ByteString
     } deriving (Eq, Read, Show)
 
