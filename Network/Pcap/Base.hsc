@@ -129,7 +129,6 @@ import Foreign.Marshal.Array (allocaArray, peekArray)
 import Foreign.Marshal.Utils (fromBool, toBool)
 import Foreign.Storable (Storable(..))
 import Network.Socket (Family(..), unpackFamily)
-import System.IO.Error (userError)
 
 #include <pcap.h>
 #include <netinet/in.h>
@@ -205,6 +204,9 @@ withErrBuf isError f = allocaArray (#const PCAP_ERRBUF_SIZE) $ \errPtr -> do
     if isError ret
       then peekCString errPtr >>= ioError . userError
       else return ret
+
+withErrBuf_ :: (a -> Bool) -> (ErrBuf -> IO a) -> IO ()
+withErrBuf_ isError f = withErrBuf isError f >> return ()
 
 -- | 'openOffline' opens a dump file for reading. The file format is
 -- the same as used by @tcpdump@ and Wireshark. The string @\"-\"@ is
@@ -298,8 +300,8 @@ setFilter hdl filt opt mask =
     withCString filt $ \filtstr -> do
       allocaBytes (#size struct bpf_program) $ \bpfp -> do
         pcap_compile hdl bpfp filtstr (fromBool opt) (fromIntegral mask) >>=
-            throwPcapIf hdl (== -1)
-        pcap_setfilter hdl bpfp >>= throwPcapIf hdl (== -1)
+            throwPcapIf_ hdl (== -1)
+        pcap_setfilter hdl bpfp >>= throwPcapIf_ hdl (== -1)
         pcap_freecode bpfp
 
 -- | Compile a filter for use by another program using the Berkeley
@@ -354,7 +356,7 @@ lookupDev = withErrBuf (== nullPtr) pcap_lookupdev >>= peekCString
 findAllDevs :: IO [Interface]
 findAllDevs =
     alloca $ \dptr -> do
-      withErrBuf (== -1) (pcap_findalldevs dptr)
+      withErrBuf_ (== -1) (pcap_findalldevs dptr)
       dbuf <- peek dptr
       dl <- devs2list dbuf
       pcap_freealldevs dbuf
@@ -440,7 +442,7 @@ lookupNet :: String     -- ^ device name
           -> IO Network
 lookupNet dev = withCString dev $ \name  ->
     alloca $ \netp -> alloca $ \maskp -> do
-      withErrBuf (== -1) (pcap_lookupnet name netp maskp)
+      withErrBuf_ (== -1) (pcap_lookupnet name netp maskp)
       net  <- peek netp
       mask <- peek maskp
 
@@ -467,9 +469,8 @@ foreign import ccall unsafe pcap_lookupnet
 -- 'openLive'.
 --
 setNonBlock :: Ptr PcapTag -> Bool -> IO ()
-setNonBlock hdl block = do
-    withErrBuf (== -1) (pcap_setnonblock hdl (fromBool block))
-    return ()
+setNonBlock hdl block =
+    withErrBuf_ (== -1) (pcap_setnonblock hdl (fromBool block))
 
 -- | Return the blocking status of the packet capture
 -- descriptor. 'True' indicates that the descriptor is
@@ -489,9 +490,8 @@ data Direction = InOut -- ^ incoming and outgoing packets (the default)
 -- Complete functionality is not necessarily available on all
 -- platforms.
 setDirection :: Ptr PcapTag -> Direction -> IO ()
-setDirection hdl dir = do
-    pcap_setdirection hdl (packDirection dir) >>= throwPcapIf hdl (== -1)
-    return ()
+setDirection hdl dir =
+    pcap_setdirection hdl (packDirection dir) >>= throwPcapIf_ hdl (== -1)
 
 packDirection :: Direction -> CInt
 packDirection In = (#const PCAP_D_IN)
@@ -514,6 +514,9 @@ throwPcapIf hdl p v = if p v
     then pcap_geterr hdl >>= peekCString >>= ioError . userError
     else return v
 
+throwPcapIf_ :: Ptr PcapTag -> (a -> Bool) -> a -> IO ()
+throwPcapIf_ hdl p v = throwPcapIf hdl p v >> return ()
+
 foreign import ccall unsafe pcap_geterr
     :: Ptr PcapTag -> IO CString
 
@@ -522,9 +525,8 @@ sendPacket :: Ptr PcapTag
            -> Ptr Word8 -- ^ packet data (including link-level header)
            -> Int       -- ^ packet size
            -> IO ()
-sendPacket hdl buf size = do
-    pcap_sendpacket hdl buf (fromIntegral size) >>= throwPcapIf hdl (== -1)
-    return ()
+sendPacket hdl buf size =
+    pcap_sendpacket hdl buf (fromIntegral size) >>= throwPcapIf_ hdl (== -1)
 
 foreign import ccall unsafe pcap_sendpacket
     :: Ptr PcapTag -> Ptr Word8 -> CInt -> IO CInt
@@ -643,9 +645,8 @@ datalink hdl = unpackLink `fmap` pcap_datalink hdl
 -- | Sets the datalink type for a given pcap descriptor.
 --
 setDatalink :: Ptr PcapTag -> Link -> IO ()
-setDatalink hdl link = do
-    pcap_set_datalink hdl (packLink link) >>= throwPcapIf hdl (== -1)
-    return ()
+setDatalink hdl link =
+    pcap_set_datalink hdl (packLink link) >>= throwPcapIf_ hdl (== -1)
 
 -- | List all the datalink types supported by a pcap descriptor.
 -- Entries from the resulting list are valid arguments to
@@ -677,7 +678,7 @@ foreign import ccall unsafe pcap_list_datalinks
 statistics :: Ptr PcapTag -> IO Statistics
 statistics hdl =
     allocaBytes (#size struct pcap_stat) $ \stats -> do
-      pcap_stats hdl stats >>= throwPcapIf hdl (== -1)
+      pcap_stats hdl stats >>= throwPcapIf_ hdl (== -1)
       recv   <- (#peek struct pcap_stat, ps_recv) stats
       pdrop  <- (#peek struct pcap_stat, ps_drop) stats
       ifdrop <- (#peek struct pcap_stat, ps_ifdrop) stats
