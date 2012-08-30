@@ -121,7 +121,7 @@ import qualified Data.ByteString.Internal as B
 import Data.Word (Word8, Word32)
 import Foreign.Ptr (Ptr, plusPtr, nullPtr, FunPtr, freeHaskellFunPtr)
 import Foreign.C.String (CString, peekCString, withCString)
-import Foreign.C.Types (CInt, CUInt, CChar, CUChar, CLong)
+import Foreign.C.Types (CInt(..), CUInt, CChar, CUChar, CLong)
 import Foreign.Concurrent (newForeignPtr)
 import Foreign.ForeignPtr (ForeignPtr)
 import Foreign.Marshal.Alloc (alloca, allocaBytes, free)
